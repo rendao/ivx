@@ -1,0 +1,8 @@
+include README.md
+include README_ZH.md
+include LICENSE
+recursive-include web *.html
+include data/live_progress.json
+recursive-include assets *
+exclude data/dashboard_state.json
+prune data/projects

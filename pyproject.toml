@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ivx"
+version = "0.1.0"
+description = "Standalone live progress dashboard for AI-led R&D workflows"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+  { name = "metric" }
+]
+keywords = ["dashboard", "ai", "rd", "observability", "governance"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
+]
+
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/rendao/ivx"
+Repository = "https://github.com/rendao/ivx"
+
+[project.scripts]
+ivx = "ivx.main:main"
+
+[tool.setuptools]
+packages = ["ivx"]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+ivx = "."
+
+[tool.setuptools.package-data]
+ivx = [
+  "web/*.html",
+  "data/live_progress.json",
+  "assets/*"
+]

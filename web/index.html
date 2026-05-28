@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI R&D Live Progress Board</title>
+  <style>
+    :root {
+      --bg-1: #f0e8d9;
+      --bg-2: #d9efe9;
+      --bg-base: #f1f3f7;
+      --panel: #fffef9;
+      --card: #ffffff;
+      --ink: #1a1d21;
+      --muted: #5d646b;
+      --border: #e5e8ed;
+      --soft-border: #e9edf2;
+      --surface-shadow: 0 12px 24px rgba(15, 24, 40, 0.07);
+      --ok: #1f7a4f;
+      --warn: #9a6b00;
+      --bad: #9f2a2a;
+      --accent: #0d6b9f;
+      --focus-gradient: linear-gradient(180deg, #fff7f3, #fff);
+      --button-surface: #fff;
+      --button-ink: #27313a;
+      --button-border: #d8dee6;
+    }
+
+    body[data-theme="dark"] {
+      --bg-1: #0f1a2a;
+      --bg-2: #071a1a;
+      --bg-base: #07111a;
+      --panel: #0b1520;
+      --card: #101b2a;
+      --ink: #e7eef7;
+      --muted: #93a4b5;
+      --border: #1c2a3b;
+      --soft-border: #182435;
+      --surface-shadow: 0 16px 30px rgba(0, 0, 0, 0.32);
+      --focus-gradient: linear-gradient(180deg, #122337, #0f1724);
+      --button-surface: #132233;
+      --button-ink: #e7eef7;
+      --button-border: #25384c;
+      --accent: #39b8d6;
+      --ok: #53c28a;
+      --warn: #f0b34f;
+      --bad: #ef6a6a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 12% 20%, var(--bg-1), transparent 36%),
+                  radial-gradient(circle at 85% 10%, var(--bg-2), transparent 42%),
+                  var(--bg-base);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .board {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1.3fr 1fr;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--surface-shadow);
+    }
+
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .command-ribbon {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .command-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--button-border);
+      background: color-mix(in srgb, var(--button-surface) 90%, transparent);
+      color: var(--button-ink);
+      font-size: 0.8rem;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: default;
+    }
+
+    .command-pill.clickable {
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .command-pill.clickable:hover {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--button-border));
+    }
+
+    .command-pill strong {
+      font-size: 0.84rem;
+      font-weight: 760;
+    }
+
+    /* Keep health strip stable: do not show project name pill in the ribbon. */
+    #pill-project {
+      display: none;
+    }
+
+    .command-pill.ok {
+      border-color: color-mix(in srgb, var(--ok) 40%, var(--button-border));
+      color: var(--ok);
+    }
+
+    .command-pill.warn {
+      border-color: color-mix(in srgb, var(--warn) 40%, var(--button-border));
+      color: var(--warn);
+    }
+
+    .command-pill.bad {
+      border-color: color-mix(in srgb, var(--bad) 45%, var(--button-border));
+      color: var(--bad);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .header-btn {
+      border: 1px solid var(--button-border);
+      background: var(--button-surface);
+      color: var(--button-ink);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .focus-strip {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scroll-snap-type: x proximity;
+    }
+
+    .focus-card {
+      flex: 1 1 180px;
+      min-width: 180px;
+      background: var(--card);
+      border: 1px solid var(--soft-border);
+      border-radius: 14px;
+      padding: 12px;
+      min-height: 92px;
+      scroll-snap-align: start;
+    }
+
+    .focus-card.emphasis {
+      background: var(--focus-gradient);
+      border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+    }
+
+    .focus-card.alert {
+      animation: alertPulse 1.9s ease-in-out infinite;
+      border-color: color-mix(in srgb, var(--bad) 55%, var(--border));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--bad) 18%, transparent), var(--surface-shadow);
+    }
+
+    .focus-card .label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-bottom: 6px;
+    }
+
+    .focus-card .value {
+      font-size: 1.08rem;
+      font-weight: 740;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .focus-card .detail {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .project-panel-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(16, 20, 28, 0.45);
+      padding: 24px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .project-panel-modal.open {
+      display: flex;
+    }
+
+    .project-modal {
+      width: min(820px, 100%);
+      background: var(--panel);
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--surface-shadow);
+      padding: 18px;
+    }
+
+    .project-modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .project-modal-title {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 740;
+    }
+
+    .project-modal-close {
+      border: 1px solid var(--button-border);
+      background: var(--button-surface);
+      color: var(--button-ink);
+      border-radius: 999px;
+      width: 36px;
+      height: 36px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .project-summary {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--soft-border);
+      border-radius: 14px;
+      padding: 12px;
+      background: var(--card);
+    }
+
+    .project-summary .name {
+      font-size: 1.08rem;
+      font-weight: 720;
+    }
+
+    .project-summary .path {
+      font-size: 0.86rem;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .project-form {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .project-form .full {
+      grid-column: 1 / -1;
+    }
+
+    .project-form label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .project-form input,
+    .project-form select {
+      width: 100%;
+      border: 1px solid var(--button-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--button-surface);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .project-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .action-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+      background: linear-gradient(90deg, #0d6b9f, #088d9a);
+      color: #fff;
+    }
+
+    .action-btn.secondary {
+      background: var(--button-surface);
+      color: var(--button-ink);
+      border: 1px solid var(--button-border);
+    }
+
+    .title {
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-weight: 760;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 640;
+      font-size: 0.88rem;
+      background: color-mix(in srgb, var(--accent) 16%, transparent);
+      color: var(--accent);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metrics.kpi {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .metric {
+      border: 1px solid var(--soft-border);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--card);
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+    }
+
+    .metric .value {
+      font-size: 1.22rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 1.02rem;
+      font-weight: 680;
+    }
+
+    .progress-wrap {
+      margin-top: 10px;
+      height: 12px;
+      width: 100%;
+      background: color-mix(in srgb, var(--button-surface) 70%, var(--border));
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #088d9a, #0d6b9f);
+      transition: width 0.35s ease;
+    }
+
+    .intervention {
+      grid-column: 1 / -1;
+      border-radius: 14px;
+      padding: 14px;
+      font-weight: 640;
+      border: 1px solid;
+    }
+
+    .intervention.ok {
+      color: var(--ok);
+      background: color-mix(in srgb, var(--ok) 12%, var(--card));
+      border-color: color-mix(in srgb, var(--ok) 28%, var(--border));
+    }
+
+    .intervention.warn {
+      color: var(--bad);
+      background: color-mix(in srgb, var(--bad) 12%, var(--card));
+      border-color: color-mix(in srgb, var(--bad) 30%, var(--border));
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
+
+    .collaborator-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 0 0 10px;
+    }
+
+    .filter-btn {
+      border: 1px solid var(--button-border);
+      background: var(--button-surface);
+      color: var(--button-ink);
+      border-radius: 999px;
+      font-size: 0.78rem;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      border-color: color-mix(in srgb, var(--accent) 70%, var(--button-border));
+      background: color-mix(in srgb, var(--accent) 16%, var(--button-surface));
+      color: var(--accent);
+      font-weight: 650;
+    }
+
+    .collaborator {
+      border: 1px solid var(--soft-border);
+      border-radius: 14px;
+      padding: 12px;
+      background: var(--card);
+    }
+
+    .collab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .collab-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .chip {
+      font-size: 0.78rem;
+      border-radius: 999px;
+      padding: 4px 8px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    .chip.dev { color: #0b4a6f; border-color: #b6d8eb; background: #eaf6ff; }
+    .chip.development { color: #0b4a6f; border-color: #b6d8eb; background: #eaf6ff; }
+    .chip.testing { color: #0b5a46; border-color: #bce8d9; background: #ecfbf5; }
+    .chip.review { color: #7a4f00; border-color: #f0dcad; background: #fff7e7; }
+    .chip.release { color: #6b2f8a; border-color: #e6ccf4; background: #faf0ff; }
+    .chip.ops { color: #6a4242; border-color: #eccccc; background: #fff2f2; }
+
+    body[data-theme="dark"] .chip.dev,
+    body[data-theme="dark"] .chip.development { color: #9ad6ff; border-color: #295e7b; background: #102333; }
+    body[data-theme="dark"] .chip.testing { color: #78e0c5; border-color: #215348; background: #0d2320; }
+    body[data-theme="dark"] .chip.review { color: #ffd58a; border-color: #6a5420; background: #2a2211; }
+    body[data-theme="dark"] .chip.release { color: #d4b0ff; border-color: #5a3f78; background: #21172d; }
+    body[data-theme="dark"] .chip.ops { color: #ffb7b7; border-color: #6e3a3a; background: #2b1717; }
+
+    .collab-meta {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 0.84rem;
+      color: #37414a;
+    }
+
+    .collab-note {
+      margin: 8px 0 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .collab-status {
+      font-size: 0.82rem;
+      font-weight: 640;
+    }
+
+    .event-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .queue-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .queue-item {
+      border: 1px solid var(--soft-border);
+      border-radius: 10px;
+      padding: 10px;
+      background: var(--card);
+    }
+
+    .queue-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .priority {
+      font-weight: 750;
+      color: #9f2a2a;
+      font-size: 0.92rem;
+    }
+
+    .event-item {
+      border: 1px solid var(--soft-border);
+      border-radius: 10px;
+      padding: 10px;
+      background: var(--card);
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-1px); }
+    }
+
+    body[data-theme="dark"] .project-panel-modal {
+      background: rgba(4, 10, 18, 0.7);
+    }
+
+    body[data-theme="dark"] .panel {
+      box-shadow: var(--surface-shadow);
+    }
+
+    body[data-theme="dark"] .header-btn,
+    body[data-theme="dark"] .project-modal-close,
+    body[data-theme="dark"] .action-btn.secondary,
+    body[data-theme="dark"] .filter-btn {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    }
+
+    body[data-theme="dark"] .progress-wrap {
+      background: #162334;
+    }
+
+    body[data-theme="dark"] .status-yellow { color: #f0b34f; }
+    body[data-theme="dark"] .status-green { color: #53c28a; }
+    body[data-theme="dark"] .status-red { color: #ef6a6a; }
+
+    .event-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .sev-info { border-left: 3px solid #4a8fb6; }
+    .sev-warning { border-left: 3px solid #b37b11; }
+    .sev-critical { border-left: 3px solid #b12424; }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .status-green { color: var(--ok); }
+    .status-yellow { color: var(--warn); }
+    .status-red { color: var(--bad); }
+
+    .build-success { color: var(--ok); }
+    .build-failed { color: var(--bad); }
+    .build-running { color: var(--warn); }
+
+    @media (max-width: 860px) {
+      .board {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics.kpi {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .collaborator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <section class="panel header">
+      <div>
+        <h1 class="title">AI R&D Live Progress Board</h1>
+        <p class="subtitle">Human-in-the-loop visibility for development, testing, commit, and release flow</p>
+        <div class="command-ribbon">
+          <div class="command-pill" id="pill-project"><span>Project</span><strong id="pill-project-value">-</strong></div>
+          <div class="command-pill clickable" id="pill-health" data-target="section-overview"><span>Health</span><strong id="pill-health-value">-</strong></div>
+          <div class="command-pill clickable" id="pill-ci" data-target="section-pipeline"><span>CI</span><strong id="pill-ci-value">-</strong></div>
+          <div class="command-pill clickable" id="pill-blockers" data-target="section-risk"><span>Blockers</span><strong id="pill-blockers-value">0</strong></div>
+          <div class="command-pill clickable" id="pill-checks" data-target="section-risk"><span>Failed Checks</span><strong id="pill-checks-value">0</strong></div>
+          <div class="command-pill clickable" id="pill-humans" data-target="section-collaborators"><span>Needs Human</span><strong id="pill-humans-value">0</strong></div>
+          <div class="command-pill clickable" id="pill-queue" data-target="section-queue"><span>Queue</span><strong id="pill-queue-value">0</strong></div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="badge" id="updated-at">Waiting for first update...</div>
+        <button class="header-btn" type="button" id="theme-toggle">Light Theme</button>
+        <button class="header-btn" type="button" id="project-open">Project</button>
+      </div>
+    </section>
+
+    <section class="panel focus-strip">
+      <article class="focus-card">
+        <div class="label">Active Project</div>
+        <div class="value" id="focus-project">-</div>
+        <div class="detail" id="focus-project-path">-</div>
+      </article>
+      <article class="focus-card">
+        <div class="label">Current Task</div>
+        <div class="value" id="focus-task">-</div>
+        <div class="detail" id="focus-milestone">-</div>
+      </article>
+      <article class="focus-card">
+        <div class="label">Progress</div>
+        <div class="value" id="focus-progress">0%</div>
+        <div class="detail" id="focus-progress-detail">-</div>
+      </article>
+      <article class="focus-card">
+        <div class="label">Status</div>
+        <div class="value" id="focus-status">-</div>
+        <div class="detail" id="focus-failed-checks">0 failed checks</div>
+      </article>
+      <article class="focus-card">
+        <div class="label">Risk</div>
+        <div class="value" id="focus-risk">-</div>
+        <div class="detail" id="focus-blockers">0 blockers</div>
+      </article>
+      <article class="focus-card emphasis">
+        <div class="label">Intervention</div>
+        <div class="value" id="focus-intervention-state">-</div>
+        <div class="detail" id="focus-intervention-reason">-</div>
+      </article>
+    </section>
+
+    <section class="panel" id="section-overview">
+      <h2 class="section-title">Project Overview</h2>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Project</div>
+          <div class="value" id="project">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Phase</div>
+          <div class="value" id="phase">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Current Task</div>
+          <div class="value" id="task">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Progress</div>
+          <div class="value" id="progress">0%</div>
+        </div>
+      </div>
+      <div class="progress-wrap" aria-label="Progress bar">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <p class="small" id="next-milestone">Next milestone: -</p>
+    </section>
+
+    <section class="panel" id="section-risk">
+      <h2 class="section-title">Risk and Control</h2>
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Status</div>
+          <div class="value" id="status">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Risk Level</div>
+          <div class="value" id="risk-level">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Failed Checks</div>
+          <div class="value" id="failed-checks">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Open Blockers</div>
+          <div class="value" id="blocker-count">0</div>
+        </div>
+      </div>
+      <ul id="blockers"></ul>
+    </section>
+
+    <section class="panel" id="section-pipeline" style="grid-column: 1 / -1;">
+      <h2 class="section-title">Pipeline KPIs</h2>
+      <div class="metrics kpi">
+        <div class="metric">
+          <div class="label">Tasks Done / Planned</div>
+          <div class="value" id="kpi-tasks">0 / 0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Tests Passed / Failed</div>
+          <div class="value" id="kpi-tests">0 / 0</div>
+        </div>
+        <div class="metric">
+          <div class="label">Coverage</div>
+          <div class="value" id="kpi-coverage">0%</div>
+        </div>
+        <div class="metric">
+          <div class="label">Commits Today</div>
+          <div class="value" id="kpi-commits">0</div>
+        </div>
+        <div class="metric">
+          <div class="label">PRs Open / Review Pending</div>
+          <div class="value" id="kpi-prs">0 / 0</div>
+        </div>
+        <div class="metric">
+          <div class="label">CI Build Status</div>
+          <div class="value" id="kpi-build-status">Running</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="section-collaborators" style="grid-column: 1 / -1;">
+      <h2 class="section-title">Collaborator Status</h2>
+      <div class="toolbar" id="collab-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="development">Dev</button>
+        <button class="filter-btn" data-filter="testing">Test</button>
+        <button class="filter-btn" data-filter="review">Review</button>
+        <button class="filter-btn" data-filter="release">Release</button>
+        <button class="filter-btn" data-filter="ops">Ops</button>
+        <button class="filter-btn" data-filter="blocked">Blocked</button>
+        <button class="filter-btn" data-filter="needs-human">Needs Human</button>
+      </div>
+      <div class="collaborator-grid" id="collaborators"></div>
+    </section>
+
+    <section class="panel" id="section-queue" style="grid-column: 1 / -1;">
+      <h2 class="section-title">Intervention Priority Queue</h2>
+      <ul class="queue-list" id="intervention-queue"></ul>
+    </section>
+
+    <section class="panel" style="grid-column: 1 / -1;">
+      <h2 class="section-title">Recent Events</h2>
+      <ul class="event-list" id="events"></ul>
+    </section>
+
+    <section class="intervention ok" id="intervention">No immediate intervention needed.</section>
+  </main>
+
+  <div class="project-panel-modal" id="project-modal" aria-hidden="true">
+    <div class="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
+      <div class="project-modal-head">
+        <h2 class="project-modal-title" id="project-modal-title">Project Switcher</h2>
+        <button class="project-modal-close" type="button" id="project-close" aria-label="Close project switcher">×</button>
+      </div>
+      <div class="project-summary" style="margin-bottom: 14px;">
+        <div class="name" id="current-project-name">No project selected</div>
+        <div class="path" id="current-project-path">Set a project below, or choose an existing one.</div>
+        <div class="small" id="current-project-id"></div>
+      </div>
+      <form class="project-form" id="project-form">
+        <label class="full">
+          <span>Existing Project</span>
+          <select id="project-select">
+            <option value="">Use current / create new below</option>
+          </select>
+        </label>
+        <label>
+          <span>Project Name</span>
+          <input id="project-name-input" type="text" placeholder="psy-2026-mini" />
+        </label>
+        <label>
+          <span>Project Path</span>
+          <input id="project-path-input" type="text" placeholder="E:/YanXin/psy-2026/mini" />
+        </label>
+        <div class="project-actions full">
+          <button class="action-btn" type="submit">Save / Switch</button>
+          <button class="action-btn secondary" type="button" id="project-refresh">Refresh</button>
+          <label class="small" style="display: inline-flex; align-items: center; gap: 6px; margin-left: 4px;">
+            <input id="project-bootstrap" type="checkbox" />
+            Force re-bootstrap
+          </label>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const elements = {
+      project: document.getElementById("project"),
+      phase: document.getElementById("phase"),
+      task: document.getElementById("task"),
+      progress: document.getElementById("progress"),
+      progressBar: document.getElementById("progress-bar"),
+      status: document.getElementById("status"),
+      riskLevel: document.getElementById("risk-level"),
+      failedChecks: document.getElementById("failed-checks"),
+      blockerCount: document.getElementById("blocker-count"),
+      blockers: document.getElementById("blockers"),
+      updatedAt: document.getElementById("updated-at"),
+      themeToggle: document.getElementById("theme-toggle"),
+      pillProject: document.getElementById("pill-project"),
+      pillProjectValue: document.getElementById("pill-project-value"),
+      pillHealth: document.getElementById("pill-health"),
+      pillHealthValue: document.getElementById("pill-health-value"),
+      pillCi: document.getElementById("pill-ci"),
+      pillCiValue: document.getElementById("pill-ci-value"),
+      pillBlockers: document.getElementById("pill-blockers"),
+      pillBlockersValue: document.getElementById("pill-blockers-value"),
+      pillChecks: document.getElementById("pill-checks"),
+      pillChecksValue: document.getElementById("pill-checks-value"),
+      pillHumans: document.getElementById("pill-humans"),
+      pillHumansValue: document.getElementById("pill-humans-value"),
+      pillQueue: document.getElementById("pill-queue"),
+      pillQueueValue: document.getElementById("pill-queue-value"),
+      nextMilestone: document.getElementById("next-milestone"),
+      intervention: document.getElementById("intervention"),
+      kpiTasks: document.getElementById("kpi-tasks"),
+      kpiTests: document.getElementById("kpi-tests"),
+      kpiCoverage: document.getElementById("kpi-coverage"),
+      kpiCommits: document.getElementById("kpi-commits"),
+      kpiPrs: document.getElementById("kpi-prs"),
+      kpiBuildStatus: document.getElementById("kpi-build-status"),
+      collaborators: document.getElementById("collaborators"),
+      events: document.getElementById("events"),
+      interventionQueue: document.getElementById("intervention-queue"),
+        collabFilters: document.getElementById("collab-filters"),
+        currentProjectName: document.getElementById("current-project-name"),
+        currentProjectPath: document.getElementById("current-project-path"),
+        currentProjectId: document.getElementById("current-project-id"),
+        projectSelect: document.getElementById("project-select"),
+        projectNameInput: document.getElementById("project-name-input"),
+        projectPathInput: document.getElementById("project-path-input"),
+        projectBootstrap: document.getElementById("project-bootstrap"),
+        projectForm: document.getElementById("project-form"),
+        projectRefresh: document.getElementById("project-refresh"),
+        projectOpen: document.getElementById("project-open"),
+        projectClose: document.getElementById("project-close"),
+        projectModal: document.getElementById("project-modal"),
+        focusProject: document.getElementById("focus-project"),
+        focusProjectPath: document.getElementById("focus-project-path"),
+        focusTask: document.getElementById("focus-task"),
+        focusMilestone: document.getElementById("focus-milestone"),
+        focusProgress: document.getElementById("focus-progress"),
+        focusProgressDetail: document.getElementById("focus-progress-detail"),
+        focusStatus: document.getElementById("focus-status"),
+        focusFailedChecks: document.getElementById("focus-failed-checks"),
+        focusRisk: document.getElementById("focus-risk"),
+        focusBlockers: document.getElementById("focus-blockers"),
+        focusInterventionState: document.getElementById("focus-intervention-state"),
+        focusInterventionReason: document.getElementById("focus-intervention-reason")
+    };
+
+    let currentCollaboratorFilter = "all";
+    let latestCollaborators = [];
+    let currentProjectId = "";
+    let projectCatalog = [];
+    let hasAutoOpenedProjectModal = false;
+
+    function setTheme(theme) {
+      const normalized = theme === "light" ? "light" : "dark";
+      document.body.setAttribute("data-theme", normalized);
+      localStorage.setItem("dashboard-theme", normalized);
+      elements.themeToggle.textContent = normalized === "dark" ? "Light Theme" : "Dark Theme";
+    }
+
+    function initTheme() {
+      const stored = localStorage.getItem("dashboard-theme");
+      if (stored === "light" || stored === "dark") {
+        setTheme(stored);
+        return;
+      }
+      setTheme("dark");
+    }
+
+    function titleCase(value) {
+      return String(value || "").replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function renderCollaborators(collaborators) {
+      latestCollaborators = Array.isArray(collaborators) ? collaborators : [];
+
+      const visible = latestCollaborators.filter((item) => {
+        if (currentCollaboratorFilter === "all") return true;
+        if (currentCollaboratorFilter === "blocked") return String(item.status || "").toLowerCase() === "blocked";
+        if (currentCollaboratorFilter === "needs-human") return Boolean(item.needs_human);
+        return String(item.role || "").toLowerCase() === currentCollaboratorFilter;
+      });
+
+      elements.collaborators.innerHTML = "";
+      visible.forEach((item) => {
+        const role = String(item.role || "development").toLowerCase();
+        const status = String(item.status || "idle").toLowerCase();
+        const card = document.createElement("article");
+        card.className = "collaborator";
+        card.innerHTML = `
+          <div class="collab-header">
+            <div>
+              <div class="collab-name">${escapeHtml(item.name || "Unknown")}</div>
+              <div class="small">${escapeHtml(item.current_task || "No task")}</div>
+            </div>
+            <div class="chip ${role}">${titleCase(role)}</div>
+          </div>
+          <div class="collab-status status-${status === "blocked" ? "red" : (status === "active" ? "green" : "yellow")}">
+            ${titleCase(status)}${item.needs_human ? " · Needs Human" : ""}
+          </div>
+          <div class="progress-wrap" aria-label="Collaborator progress">
+            <div class="progress-bar" style="width:${item.progress_percent || 0}%"></div>
+          </div>
+          <div class="collab-meta">
+            <div>Commits: ${item.commits_today || 0}</div>
+            <div>PRs: ${item.prs_open || 0}</div>
+            <div>Tests: ${(item.tests_passed || 0)} / ${(item.tests_failed || 0)}</div>
+            <div>Reviews: ${item.reviews_pending || 0}</div>
+          </div>
+          <p class="collab-note">${escapeHtml(item.note || "No note")}</p>
+        `;
+        elements.collaborators.appendChild(card);
+      });
+
+      if (visible.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "small";
+        empty.textContent = "No collaborators match the selected filter.";
+        elements.collaborators.appendChild(empty);
+      }
+    }
+
+    function render(data) {
+      elements.project.textContent = data.project || "-";
+      elements.phase.textContent = data.phase || "-";
+      elements.task.textContent = data.task || "-";
+      elements.progress.textContent = `${data.progress_percent || 0}%`;
+      elements.progressBar.style.width = `${data.progress_percent || 0}%`;
+
+      const statusText = titleCase(data.status || "unknown");
+      elements.status.textContent = statusText;
+      elements.status.className = `value status-${data.status || "yellow"}`;
+
+      elements.riskLevel.textContent = titleCase(data.risk_level || "unknown");
+      elements.failedChecks.textContent = String(data.failed_checks || 0);
+
+      const blockers = Array.isArray(data.blockers) ? data.blockers : [];
+      elements.blockerCount.textContent = String(blockers.length);
+      elements.blockers.innerHTML = "";
+      blockers.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        elements.blockers.appendChild(li);
+      });
+
+      elements.nextMilestone.textContent = `Next milestone: ${data.next_milestone || "-"}`;
+      elements.updatedAt.textContent = `Last update: ${data.last_update || "-"}`;
+
+      elements.focusProject.textContent = data.project || "-";
+      elements.focusProjectPath.textContent = data.project_path || (data.project_path_configured ? "Path configured and hidden" : "No project path set yet");
+      elements.focusTask.textContent = data.task || "-";
+      elements.focusMilestone.textContent = data.next_milestone || "No next milestone set";
+      elements.focusProgress.textContent = `${data.progress_percent || 0}%`;
+      elements.focusProgressDetail.textContent = `${data.phase || "-"} · updated ${data.last_update || "-"}`;
+      elements.focusStatus.textContent = titleCase(data.status || "unknown");
+      elements.focusFailedChecks.textContent = `${data.failed_checks || 0} failed checks`;
+      elements.focusRisk.textContent = titleCase(data.risk_level || "unknown");
+      elements.focusBlockers.textContent = `${Array.isArray(data.blockers) ? data.blockers.length : 0} blockers`;
+
+      const pipeline = data.pipeline_metrics || {};
+      const development = pipeline.development || {};
+      const testing = pipeline.testing || {};
+      const commit = pipeline.commit || {};
+      const ci = pipeline.ci || {};
+      const collaborators = Array.isArray(data.collaborators) ? data.collaborators : [];
+      const queue = Array.isArray(data.intervention_queue) ? data.intervention_queue : [];
+      const needsHumanCount = collaborators.filter((item) => Boolean(item.needs_human)).length;
+      const failedChecks = Number(data.failed_checks || 0);
+      const regressions = Number(testing.regressions || 0);
+      const healthScore = clamp(
+        100
+          - (String(data.status || "green") === "red" ? 28 : String(data.status || "green") === "yellow" ? 12 : 0)
+          - (String(data.risk_level || "low") === "critical" ? 28 : String(data.risk_level || "low") === "high" ? 18 : String(data.risk_level || "low") === "medium" ? 8 : 0)
+          - blockers.length * 10
+          - failedChecks * 6
+          - regressions * 8
+          - needsHumanCount * 5
+          - queue.length * 2,
+        0,
+        100
+      );
+
+      elements.kpiTasks.textContent = `${development.tasks_done || 0} / ${development.tasks_planned || 0}`;
+      elements.kpiTests.textContent = `${testing.tests_passed || 0} / ${testing.tests_failed || 0}`;
+      elements.kpiCoverage.textContent = `${testing.coverage_percent || 0}%`;
+      elements.kpiCommits.textContent = String(commit.commits_today || 0);
+      elements.kpiPrs.textContent = `${commit.prs_open || 0} / ${commit.review_pending || 0}`;
+      const buildStatus = String(ci.last_build_status || "running").toLowerCase();
+      elements.kpiBuildStatus.textContent = titleCase(buildStatus);
+      elements.kpiBuildStatus.className = `value build-${buildStatus}`;
+
+      elements.pillProjectValue.textContent = data.project || "-";
+  elements.pillHealthValue.textContent = `${healthScore}`;
+      elements.pillCiValue.textContent = titleCase(buildStatus);
+  elements.pillBlockersValue.textContent = String(blockers.length);
+  elements.pillChecksValue.textContent = String(failedChecks);
+      elements.pillHumansValue.textContent = String(needsHumanCount);
+      elements.pillQueueValue.textContent = String(queue.length);
+
+      elements.pillProject.className = "command-pill";
+  elements.pillHealth.className = `command-pill clickable ${healthScore < 60 ? "bad" : healthScore < 80 ? "warn" : "ok"}`;
+      elements.pillCi.className = `command-pill ${buildStatus === "failed" ? "bad" : (buildStatus === "running" ? "warn" : "ok")}`;
+  elements.pillBlockers.className = `command-pill clickable ${blockers.length > 0 ? (blockers.length > 1 ? "bad" : "warn") : "ok"}`;
+  elements.pillChecks.className = `command-pill clickable ${failedChecks > 0 ? (failedChecks > 1 ? "bad" : "warn") : "ok"}`;
+      elements.pillHumans.className = `command-pill ${needsHumanCount > 0 ? "bad" : "ok"}`;
+      elements.pillQueue.className = `command-pill ${queue.length > 0 ? "warn" : "ok"}`;
+
+      renderCollaborators(collaborators);
+
+      elements.interventionQueue.innerHTML = "";
+      queue.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "queue-item";
+        li.innerHTML = `
+          <div class="queue-top">
+            <strong>${escapeHtml(item.target || "unknown")}</strong>
+            <span class="priority">P${item.priority || 0}</span>
+          </div>
+          <div class="small">${titleCase(item.role || "")}</div>
+          <div>${escapeHtml(item.reason || "")}</div>
+          <div class="small">Action: ${escapeHtml(item.action || "")}</div>
+        `;
+        elements.interventionQueue.appendChild(li);
+      });
+
+      if (queue.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "small";
+        empty.textContent = "No intervention items. Flow is stable.";
+        elements.interventionQueue.appendChild(empty);
+      }
+
+      const events = Array.isArray(data.recent_events) ? data.recent_events : [];
+      elements.events.innerHTML = "";
+      events.forEach((event) => {
+        const li = document.createElement("li");
+        const sev = String(event.severity || "info").toLowerCase();
+        li.className = `event-item sev-${sev}`;
+        li.innerHTML = `
+          <div class="event-top">
+            <strong>${event.actor || "system"}</strong>
+            <span class="small">${event.time || "-"}</span>
+          </div>
+          <div class="small">${event.type || "update"}</div>
+          <div>${event.message || ""}</div>
+        `;
+        elements.events.appendChild(li);
+      });
+
+      const intervention = data.human_intervention || { recommended: false, reason: "No immediate intervention needed." };
+      elements.intervention.textContent = intervention.reason || "No immediate intervention needed.";
+      elements.intervention.className = intervention.recommended ? "intervention warn" : "intervention ok";
+      elements.focusInterventionState.textContent = intervention.recommended ? "Review required" : "Stable";
+      elements.focusInterventionReason.textContent = intervention.reason || "No immediate intervention needed.";
+      elements.focusInterventionState.parentElement.classList.toggle("alert", Boolean(intervention.recommended));
+    }
+
+    function renderProjectCatalog(payload) {
+      const current = payload.current_project || {};
+      projectCatalog = Array.isArray(payload.projects) ? payload.projects : [];
+      currentProjectId = String(payload.current_project_id || current.id || "");
+
+      elements.currentProjectName.textContent = current.name || "No project selected";
+      elements.currentProjectPath.textContent = current.path || (current.path_configured ? "Path configured and hidden" : "Set a project below, or choose an existing one.");
+      elements.currentProjectId.textContent = current.id ? `Project ID: ${current.id}` : "";
+
+      elements.projectNameInput.value = current.name || "";
+      elements.projectPathInput.value = "";
+
+      const options = [
+        '<option value="">Use current / create new below</option>',
+        ...projectCatalog.map((item) => {
+          const selected = String(item.id || "") === currentProjectId ? " selected" : "";
+          const label = `${item.name || item.id || "unknown"}`;
+          return `<option value="${escapeHtml(item.id || "")}"${selected}>${escapeHtml(label)}</option>`;
+        })
+      ];
+      elements.projectSelect.innerHTML = options.join("");
+      elements.projectSelect.value = "";
+
+      if (!hasAutoOpenedProjectModal && (!current.path || currentProjectId === "default")) {
+        hasAutoOpenedProjectModal = true;
+        openProjectModal();
+      }
+    }
+
+    async function fetchProjectCatalog() {
+      const response = await fetch("/api/project", { cache: "no-store" });
+      const data = await response.json();
+      renderProjectCatalog(data);
+    }
+
+    async function saveProjectSelection(event) {
+      event.preventDefault();
+
+      const selectedProjectId = String(elements.projectSelect.value || "").trim();
+      const projectName = String(elements.projectNameInput.value || "").trim();
+      const projectPath = String(elements.projectPathInput.value || "").trim();
+      const forceBootstrap = Boolean(elements.projectBootstrap && elements.projectBootstrap.checked);
+      const hasTypedProjectInput = Boolean(projectName || projectPath);
+      const shouldCreateOrUpdateFromForm = hasTypedProjectInput && (selectedProjectId === "" || selectedProjectId === currentProjectId);
+
+      const payload = shouldCreateOrUpdateFromForm
+        ? { project_name: projectName, project_path: projectPath }
+        : (selectedProjectId
+          ? { project_id: selectedProjectId }
+          : { project_name: projectName, project_path: projectPath });
+
+      if (forceBootstrap) {
+        payload.bootstrap = true;
+      }
+
+      if (!payload.project_id && !String(payload.project_name || "").trim() && !String(payload.project_path || "").trim()) {
+        elements.updatedAt.textContent = "Project name or path is required to create a new project.";
+        return;
+      }
+
+      await fetch("/api/project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+
+      await fetchProjectCatalog();
+      await fetchProgress();
+      sourceCloseAndReconnect();
+      elements.projectSelect.value = "";
+      if (elements.projectBootstrap) {
+        elements.projectBootstrap.checked = false;
+      }
+    }
+
+    async function fetchProgress() {
+      const response = await fetch("/api/progress", { cache: "no-store" });
+      const data = await response.json();
+      render(data);
+    }
+
+    function openProjectModal() {
+      elements.projectModal.classList.add("open");
+      elements.projectModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeProjectModal() {
+      elements.projectModal.classList.remove("open");
+      elements.projectModal.setAttribute("aria-hidden", "true");
+    }
+
+    let streamSource = null;
+
+    function sourceCloseAndReconnect() {
+      if (streamSource) {
+        streamSource.close();
+      }
+      connectSSE();
+    }
+
+    function connectSSE() {
+      streamSource = new EventSource("/api/stream");
+      streamSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          render(data);
+        } catch (_) {
+          // Ignore malformed events and keep stream alive.
+        }
+      };
+      streamSource.onerror = () => {
+        streamSource.close();
+        setTimeout(connectSSE, 3000);
+      };
+    }
+
+    elements.collabFilters.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-filter]");
+      if (!button) return;
+
+      currentCollaboratorFilter = button.getAttribute("data-filter") || "all";
+      Array.from(elements.collabFilters.querySelectorAll(".filter-btn")).forEach((btn) => {
+        btn.classList.toggle("active", btn === button);
+      });
+
+      renderCollaborators(latestCollaborators);
+    });
+
+    elements.projectForm.addEventListener("submit", saveProjectSelection);
+    elements.projectRefresh.addEventListener("click", async () => {
+      await fetchProjectCatalog();
+      await fetchProgress();
+    });
+    elements.projectOpen.addEventListener("click", openProjectModal);
+    elements.projectClose.addEventListener("click", closeProjectModal);
+    elements.projectModal.addEventListener("click", (event) => {
+      if (event.target === elements.projectModal) {
+        closeProjectModal();
+      }
+    });
+    elements.projectSelect.addEventListener("change", () => {
+      const selected = projectCatalog.find((item) => String(item.id || "") === String(elements.projectSelect.value || ""));
+      if (!selected) return;
+      elements.projectNameInput.value = selected.name || "";
+      elements.projectPathInput.value = selected.path || "";
+    });
+    document.querySelectorAll(".command-pill.clickable[data-target]").forEach((pill) => {
+      pill.addEventListener("click", () => {
+        const targetId = pill.getAttribute("data-target");
+        const target = targetId ? document.getElementById(targetId) : null;
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    });
+    elements.themeToggle.addEventListener("click", () => {
+      const current = document.body.getAttribute("data-theme") || "dark";
+      setTheme(current === "dark" ? "light" : "dark");
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeProjectModal();
+      }
+    });
+
+    initTheme();
+    fetchProjectCatalog().catch(() => {});
+    fetchProgress().catch(() => {});
+    connectSSE();
+  </script>
+</body>
+</html>
