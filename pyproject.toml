@@ -52,8 +52,7 @@ where = ["src"]
 [tool.setuptools.package-data]
 ivx = [
   "web/*.html",
-  "data/live_progress.json",
-  "assets/*"
+  "data/live_progress.json"
 ]
 
 [tool.pytest.ini_options]

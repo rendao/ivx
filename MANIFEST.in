@@ -2,7 +2,6 @@ include README.md
 include LICENSE
 recursive-include src/ivx/web *.html
 include src/ivx/data/live_progress.json
-recursive-include src/ivx/assets *
 prune docs
 prune tests
 prune tools
