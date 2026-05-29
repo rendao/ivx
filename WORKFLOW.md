@@ -18,9 +18,23 @@ Goal:
 1. Start from a clear requirement and acceptance criteria.
 2. Implement fast in small, verifiable increments.
 3. Run local required checks before PR.
-4. Open PR with evidence and rollback plan.
-5. Merge only after required CI checks pass.
-6. Record handover items for the next owner.
+4. The session that implements a task is responsible for validation and commit quality.
+5. Open PR or review request with evidence and rollback plan before push/merge to shared remote.
+6. Merge only after required CI checks pass and review is completed.
+7. Record handover items for the next owner.
+
+## Task Ownership and Commit Rule
+- Active task pickup should start from `docs/internal/PLAN.md`.
+- One task should have one active owner/session at a time.
+- Whoever implements a task is responsible for:
+	- scoped code changes
+	- focused validation
+	- updating `docs/internal/PLAN.md`
+	- creating the commit for that task when the scope is clean
+- Push to shared remote, merge, or release should not happen without review.
+- Recommended split:
+	- task owner: implement, validate, commit
+	- reviewer: review, approve/reject, then allow push/merge
 
 ## Mandatory Local Checks
 Use one command:

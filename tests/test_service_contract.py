@@ -1,9 +1,12 @@
+import errno
 import json
+import io
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -99,6 +102,39 @@ class ServiceContractTests(unittest.TestCase):
         snapshot = service.health_snapshot()
         self.assertIn(snapshot["status"], {"degraded", "unhealthy"})
         self.assertEqual(snapshot["checks"]["project_path"], "missing")
+
+    def test_run_reports_port_conflict_and_returns_one(self) -> None:
+        stderr = io.StringIO()
+        old_argv = sys.argv
+        try:
+            sys.argv = ["ivx", "--host", "127.0.0.1", "--port", "8789", "--data-file", str(self.temp_dir / "live_progress.json")]
+            with mock.patch.object(service, "collect_runtime_signals") as collect_runtime_signals:
+                with mock.patch.object(service, "_listening_process_hint", return_value="TCP 127.0.0.1:8789 LISTENING 4242"):
+                    with mock.patch.object(service, "DashboardHTTPServer", side_effect=OSError(errno.EADDRINUSE, "Only one usage", None, 10048)):
+                        with mock.patch("sys.stderr", stderr):
+                            code = service.run()
+
+            self.assertEqual(code, 1)
+            self.assertIn("127.0.0.1:8789 is already in use", stderr.getvalue())
+            self.assertIn("Listener hint", stderr.getvalue())
+            collect_runtime_signals.assert_called_once_with(force=True)
+        finally:
+            sys.argv = old_argv
+
+    def test_run_does_not_start_collector_when_bind_fails(self) -> None:
+        old_argv = sys.argv
+        try:
+            sys.argv = ["ivx", "--host", "127.0.0.1", "--port", "8789", "--data-file", str(self.temp_dir / "live_progress.json")]
+            with mock.patch.object(service, "collect_runtime_signals"):
+                with mock.patch.object(service, "_listening_process_hint", return_value=""):
+                    with mock.patch.object(service, "DashboardHTTPServer", side_effect=OSError(errno.EADDRINUSE, "Only one usage", None, 10048)):
+                        with mock.patch("threading.Thread") as thread_cls:
+                            code = service.run()
+
+            self.assertEqual(code, 1)
+            thread_cls.assert_not_called()
+        finally:
+            sys.argv = old_argv
 
 
 if __name__ == "__main__":

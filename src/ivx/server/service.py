@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import errno
 import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import threading
@@ -2096,6 +2098,79 @@ class DashboardHTTPServer(ThreadingHTTPServer):
         super().handle_error(request, client_address)
 
 
+def _listening_process_hint(host: str, port: int) -> str:
+    commands: list[list[str]] = []
+    if os.name == "nt":
+        commands.append(["netstat", "-ano", "-p", "tcp"])
+    else:
+        commands.append(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN"])
+        commands.append(["ss", "-ltnp"])
+
+    for command in commands:
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=3,
+            )
+        except Exception:
+            continue
+
+        if result.returncode != 0 or not result.stdout.strip():
+            continue
+
+        lines = [line.strip() for line in result.stdout.splitlines() if str(port) in line]
+        if not lines:
+            continue
+
+        if os.name == "nt":
+            normalized_host = host if host not in {"0.0.0.0", "::"} else ""
+            filtered = [
+                line for line in lines if f":{port}" in line and (not normalized_host or normalized_host in line or "0.0.0.0" in line)
+            ]
+            if filtered:
+                return filtered[0]
+        else:
+            return lines[0]
+
+    return ""
+
+
+def _format_bind_error(host: str, port: int, exc: OSError) -> str:
+    winerror = getattr(exc, "winerror", None)
+    err_no = getattr(exc, "errno", None)
+
+    if winerror == 10048 or err_no == errno.EADDRINUSE:
+        lines = [
+            f"Failed to start dashboard: {host}:{port} is already in use.",
+            "Choose a different --port or stop the existing listener first.",
+        ]
+        listener = _listening_process_hint(host, port)
+        if listener:
+            lines.append(f"Listener hint: {listener}")
+        elif os.name == "nt":
+            lines.append(f"Check listener: netstat -ano -p tcp | findstr :{port}")
+        else:
+            lines.append(f"Check listener: lsof -nP -iTCP:{port} -sTCP:LISTEN")
+        return "\n".join(lines)
+
+    if winerror == 10013 or err_no == errno.EACCES:
+        return (
+            f"Failed to start dashboard: access denied when binding {host}:{port}.\n"
+            "Try a different port or run with sufficient permissions."
+        )
+
+    if err_no in {errno.EADDRNOTAVAIL, 10049}:
+        return (
+            f"Failed to start dashboard: host {host} is not available on this machine.\n"
+            "Use a valid local interface address or 127.0.0.1."
+        )
+
+    return f"Failed to start dashboard on {host}:{port}: {exc}"
+
+
 def run() -> int:
     global PROGRESS_FILE
     global DEFAULT_PROJECT_NAME
@@ -2141,13 +2216,18 @@ def run() -> int:
 
     collect_runtime_signals(force=True)
 
+    try:
+        server = DashboardHTTPServer((args.host, args.port), Handler)
+    except OSError as exc:
+        print(_format_bind_error(args.host, args.port, exc), file=sys.stderr)
+        return 1
+
     collector_stop_event = threading.Event()
     collector_thread: threading.Thread | None = None
     if AUTO_COLLECT_ENABLED:
         collector_thread = threading.Thread(target=collector_worker, args=(collector_stop_event,), daemon=True)
         collector_thread.start()
 
-    server = DashboardHTTPServer((args.host, args.port), Handler)
     print(f"Dashboard running at http://{args.host}:{args.port}")
     print(f"Progress data file: {PROGRESS_FILE}")
     print(f"Auto collector: {'enabled' if AUTO_COLLECT_ENABLED else 'disabled'} ({AUTO_COLLECT_INTERVAL_SECONDS}s)")

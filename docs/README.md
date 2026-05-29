@@ -12,6 +12,15 @@ This directory stores project documentation by purpose.
 - `internal/GOVERNANCE_METRICS_CONTRACT.md`: governance event contract and KPI definition.
 - `internal/GITHUB_WORKFLOW_METRICS_GUIDE.md`: GitHub Actions workflow standard and metrics push guide.
 - `internal/WORKFLOW_UNIVERSAL_GUIDE.md`: concise cross-project workflow baseline.
+- `internal/ROADMAP.md`: rolling product roadmap (canonical, continuously updated).
+- `internal/PLAN.md`: rolling implementation plan and active task status board (canonical, continuously updated).
+- `internal/PRODUCT_STRATEGY_20260529.md`: product value model and roadmap direction.
+- `internal/DEVELOPMENT_PLAN_20260529.md`: 4-week workstream and dependency plan.
+- `internal/SESSION_TASK_PACK_20260529.md`: executable tasks and handoff template for cross-session delivery.
+
+Note:
+- `ROADMAP.md` and `PLAN.md` are the active records.
+- Date-stamped docs are snapshots for historical context.
 
 ## Reusable Templates
 - `.github/PULL_REQUEST_TEMPLATE.md`: one-page PR evidence template.
