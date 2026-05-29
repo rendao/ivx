@@ -157,6 +157,80 @@ OK (skipped=1)
         self.assertEqual(testing.get("tests_failed"), 0)
         self.assertEqual(testing.get("regressions"), 0)
 
+    def test_apply_repository_signals_keeps_existing_testing_when_no_detected_signal(self) -> None:
+        payload = {
+            "task": "feature delivery",
+            "phase": "Phase 1 - Pilot",
+            "pipeline_metrics": {
+                "testing": {
+                    "tests_passed": 19,
+                    "tests_failed": 1,
+                    "coverage_percent": 75,
+                    "regressions": 1,
+                },
+                "commit": {},
+            },
+            "recent_events": [],
+            "collaborators": [],
+        }
+
+        with mock.patch("ivx.server.telemetry.collect_git_activity", return_value={"events": [], "commits_today": 0, "total_commits": 0}):
+            with mock.patch(
+                "ivx.server.telemetry.collect_test_activity",
+                return_value={
+                    "tests_passed": 0,
+                    "tests_failed": 0,
+                    "coverage_percent": 0,
+                    "regressions": 0,
+                    "report_found": False,
+                    "source": "none",
+                },
+            ):
+                updated = apply_repository_signals(payload, project_root=self.temp_dir)
+
+        testing = updated.get("pipeline_metrics", {}).get("testing", {})
+        self.assertEqual(testing.get("tests_passed"), 19)
+        self.assertEqual(testing.get("tests_failed"), 1)
+        self.assertEqual(testing.get("coverage_percent"), 75)
+        self.assertEqual(testing.get("regressions"), 1)
+
+    def test_apply_repository_signals_auto_mode_refreshes_testing_even_without_source(self) -> None:
+        payload = {
+            "task": "auto-constructed dashboard contract",
+            "phase": "Phase 0 - Auto Discovery",
+            "pipeline_metrics": {
+                "testing": {
+                    "tests_passed": 32,
+                    "tests_failed": 4,
+                    "coverage_percent": 61,
+                    "regressions": 4,
+                },
+                "commit": {},
+            },
+            "recent_events": [],
+            "collaborators": [],
+        }
+
+        with mock.patch("ivx.server.telemetry.collect_git_activity", return_value={"events": [], "commits_today": 0, "total_commits": 0}):
+            with mock.patch(
+                "ivx.server.telemetry.collect_test_activity",
+                return_value={
+                    "tests_passed": 7,
+                    "tests_failed": 1,
+                    "coverage_percent": 0,
+                    "regressions": 1,
+                    "report_found": False,
+                    "source": "none",
+                },
+            ):
+                updated = apply_repository_signals(payload, project_root=self.temp_dir)
+
+        testing = updated.get("pipeline_metrics", {}).get("testing", {})
+        self.assertEqual(testing.get("tests_passed"), 7)
+        self.assertEqual(testing.get("tests_failed"), 1)
+        self.assertEqual(testing.get("coverage_percent"), 0)
+        self.assertEqual(testing.get("regressions"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
