@@ -13,7 +13,16 @@ dist/
 .mypy_cache/
 .coverage
 htmlcov/
+.ivx/
+data/.backups/
+.ivx/data/junit*.xml
+.ivx/data/coverage*.xml
 data/dashboard_state.json
 data/dashboard_debug.log
 data/projects/*.json
 !data/projects/.gitkeep
+HANDOVER.md
+
+# Internal docs: keep standards tracked, ignore private drafts/notes.
+docs/internal/private/
+docs/internal/**/*.local.md

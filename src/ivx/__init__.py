@@ -1,4 +1,4 @@
-"""Dashboard package facade."""
+"""IVX package facade."""
 
 __all__ = [
     "__version__",

@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""Common app entry for dashboard server.
-
-This is a stable entrypoint alias to server.py for users who expect app.py.
-"""
+"""Root app entrypoint kept for compatibility."""
 
 from __future__ import annotations
 
-import runpy
+import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent
+SRC_DIR = ROOT / "src"
+src_str = str(SRC_DIR)
+if src_str in sys.path:
+    sys.path.remove(src_str)
+sys.path.insert(0, src_str)
 
-def main() -> int:
-    target = Path(__file__).resolve().with_name("server.py")
-    runpy.run_path(str(target), run_name="__main__")
-    return 0
+from ivx.app import main
 
 
 if __name__ == "__main__":

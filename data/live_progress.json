@@ -1,12 +1,12 @@
 {
-  "project_id": "default",
-  "project": "generic-project",
-  "project_path": "",
+  "project_id": "release-smoke-efc4510c",
+  "project": "release-smoke",
+  "project_path": "[configured, hidden]",
   "phase": "Phase 1 - Pilot",
   "task": "Initialize live dashboard",
   "progress_percent": 0,
-  "status": "green",
-  "risk_level": "low",
+  "status": "yellow",
+  "risk_level": "high",
   "failed_checks": 0,
   "blockers": [],
   "next_milestone": "Dashboard connected to real task updates",
@@ -36,6 +36,63 @@
     "quality": {
       "defect_escape": 0,
       "rollback_count": 0
+    },
+    "governance": {
+      "decision_logs_24h": 0,
+      "gate_pass_rate_percent": 100,
+      "human_response_sla_percent": 100,
+      "review_requests_24h": 0,
+      "unresolved_human_reviews": 0,
+      "traceability_coverage_percent": 100,
+      "transparency_score": 60,
+      "controllability_score": 100,
+      "objective_defined": true,
+      "events_24h": 0,
+      "ai_task_started_24h": 0,
+      "ai_task_completed_24h": 0,
+      "ai_task_stopped_24h": 0,
+      "ai_task_stop_rate_percent": 0,
+      "human_authorization_requests_24h": 0,
+      "human_authorization_approved_24h": 0,
+      "human_authorization_denied_24h": 0,
+      "pending_authorization_requests_24h": 0,
+      "authorization_approval_rate_percent": 100,
+      "human_confirmations_24h": 0,
+      "human_skips_24h": 0,
+      "human_stops_24h": 0,
+      "human_confirmation_rate_percent": 100,
+      "human_interactions_24h": 0,
+      "human_interaction_rate_percent": 0,
+      "ai_behavior_events_24h": 0,
+      "human_behavior_events_24h": 0,
+      "system_behavior_events_24h": 0,
+      "behavior_events_total_24h": 0,
+      "ai_behavior_ratio_percent": 0,
+      "human_behavior_ratio_percent": 0,
+      "ai_behavior_type_counts_24h": {},
+      "human_behavior_type_counts_24h": {},
+      "system_behavior_type_counts_24h": {},
+      "interaction_traceability_percent": 100,
+      "process_observability_score": 60,
+      "objective_progress_score": 50,
+      "human_collaboration_quality_score": 100,
+      "risk_control_score": 100,
+      "overall_governance_score": 78,
+      "data_quality_tier": "C",
+      "governance_recommendations": [
+        {
+          "dimension": "objective_progress",
+          "priority": 88,
+          "reason": "Objective progress is weak.",
+          "action": "Re-baseline tasks_planned/tasks_done and enforce gate criteria before closure."
+        },
+        {
+          "dimension": "data_quality",
+          "priority": 85,
+          "reason": "Evidence quality is insufficient for benchmarking.",
+          "action": "Publish richer CI reports and governance interaction events before comparing scores."
+        }
+      ]
     }
   },
   "collaborators": [
@@ -56,11 +113,78 @@
       "last_update": "1970-01-01T00:00:00+00:00"
     }
   ],
-  "recent_events": [],
-  "last_update": "1970-01-01T00:00:00+00:00",
+  "recent_events": [
+    {
+      "time": "2026-05-29T15:15:10+08:00",
+      "type": "commit",
+      "actor": "metric",
+      "message": "feat: add workflow baseline and architecture playbook",
+      "severity": "info"
+    },
+    {
+      "time": "2026-05-29T04:02:28+08:00",
+      "type": "commit",
+      "actor": "metric",
+      "message": "feat: initial clean release of IVX dashboard",
+      "severity": "info"
+    },
+    {
+      "time": "2026-05-28T23:15:37+00:00",
+      "type": "gate_failed",
+      "actor": "ci-system",
+      "message": "Recordability check: Gate failed",
+      "severity": "info"
+    },
+    {
+      "time": "2026-05-28T23:15:36+00:00",
+      "type": "human_review_resolved",
+      "actor": "human-reviewer",
+      "message": "Recordability check: Review resolved",
+      "severity": "info"
+    },
+    {
+      "time": "2026-05-28T23:15:36+00:00",
+      "type": "gate_passed",
+      "actor": "ci-system",
+      "message": "Recordability check: Gate passed",
+      "severity": "info"
+    },
+    {
+      "time": "2026-05-28T23:15:35+00:00",
+      "type": "action_stopped",
+      "actor": "human-operator",
+      "message": "Recordability check: Action stopped",
+      "severity": "info"
+    },
+    {
+      "time": "2026-05-28T23:15:35+00:00",
+      "type": "human_review_requested",
+      "actor": "human-reviewer",
+      "message": "Recordability check: Review requested",
+      "severity": "info"
+    },
+    {
+      "time": "2026-05-28T23:15:34+00:00",
+      "type": "action_skipped",
+      "actor": "human-operator",
+      "message": "Recordability check: Action skipped",
+      "severity": "info"
+    }
+  ],
+  "last_update": "2026-05-29T08:12:37+00:00",
   "human_intervention": {
-    "recommended": false,
-    "reason": "No immediate intervention needed."
+    "recommended": true,
+    "reason": "Intervention recommended: risk level is high; priority queue active (stale update: 29667372m)."
   },
-  "intervention_queue": []
+  "intervention_queue": [
+    {
+      "scope": "collaborator",
+      "target": "AI Builder",
+      "role": "development",
+      "priority": 10,
+      "reason": "stale update: 29667372m",
+      "action": "Bootstrapping"
+    }
+  ],
+  "project_path_configured": true
 }

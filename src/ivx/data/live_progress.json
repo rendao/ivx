@@ -1,0 +1,66 @@
+{
+  "project_id": "default",
+  "project": "generic-project",
+  "project_path": "",
+  "phase": "Phase 1 - Pilot",
+  "task": "Initialize live dashboard",
+  "progress_percent": 0,
+  "status": "green",
+  "risk_level": "low",
+  "failed_checks": 0,
+  "blockers": [],
+  "next_milestone": "Dashboard connected to real task updates",
+  "pipeline_metrics": {
+    "development": {
+      "tasks_planned": 10,
+      "tasks_done": 0,
+      "velocity_points": 0
+    },
+    "testing": {
+      "tests_passed": 0,
+      "tests_failed": 0,
+      "coverage_percent": 0,
+      "regressions": 0
+    },
+    "commit": {
+      "commits_today": 0,
+      "prs_open": 0,
+      "review_pending": 0,
+      "avg_pr_cycle_minutes": 0
+    },
+    "ci": {
+      "build_success_rate": 100,
+      "deploy_success_rate": 100,
+      "last_build_status": "success"
+    },
+    "quality": {
+      "defect_escape": 0,
+      "rollback_count": 0
+    }
+  },
+  "collaborators": [
+    {
+      "id": "ai-builder",
+      "name": "AI Builder",
+      "role": "development",
+      "status": "active",
+      "current_task": "Initialize dashboard",
+      "progress_percent": 0,
+      "commits_today": 0,
+      "tests_passed": 0,
+      "tests_failed": 0,
+      "prs_open": 0,
+      "reviews_pending": 0,
+      "needs_human": false,
+      "note": "Bootstrapping",
+      "last_update": "1970-01-01T00:00:00+00:00"
+    }
+  ],
+  "recent_events": [],
+  "last_update": "1970-01-01T00:00:00+00:00",
+  "human_intervention": {
+    "recommended": false,
+    "reason": "No immediate intervention needed."
+  },
+  "intervention_queue": []
+}

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ivx"
-version = "0.1.0"
+version = "0.2.0"
 description = "Standalone live progress dashboard for AI-led R&D workflows"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -26,19 +26,28 @@ classifiers = [
 
 dependencies = []
 
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0.0",
+  "pytest-cov>=5.0.0",
+  "flake8>=7.0.0"
+]
+
 [project.urls]
 Homepage = "https://github.com/rendao/ivx"
 Repository = "https://github.com/rendao/ivx"
 
 [project.scripts]
-ivx = "ivx.main:main"
+ivx = "ivx.cli:main"
 
 [tool.setuptools]
-packages = ["ivx"]
 include-package-data = true
 
 [tool.setuptools.package-dir]
-ivx = "."
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools.package-data]
 ivx = [
@@ -46,3 +55,19 @@ ivx = [
   "data/live_progress.json",
   "assets/*"
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+markers = [
+  "integration: cross-module workflow tests"
+]
+addopts = "-q --maxfail=1 --disable-warnings --junitxml=.ivx/data/junit.xml --cov=src/ivx --cov-report=xml:.ivx/data/coverage.xml --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/ivx"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

@@ -1,8 +1,12 @@
 include README.md
-include README_ZH.md
 include LICENSE
-recursive-include web *.html
-include data/live_progress.json
-recursive-include assets *
-exclude data/dashboard_state.json
-prune data/projects
+recursive-include src/ivx/web *.html
+include src/ivx/data/live_progress.json
+recursive-include src/ivx/assets *
+prune docs
+prune tests
+prune tools
+prune .ivx
+prune data
+global-exclude *.py[cod]
+global-exclude __pycache__

@@ -766,6 +766,18 @@
           <div class="value" id="kpi-build-status">Running</div>
         </div>
         <div class="metric">
+          <div class="label">Governance Transparency</div>
+          <div class="value" id="kpi-transparency">100</div>
+        </div>
+        <div class="metric">
+          <div class="label">Governance Controllability</div>
+          <div class="value" id="kpi-controllability">100</div>
+        </div>
+        <div class="metric">
+          <div class="label">Gate Pass / Human SLA</div>
+          <div class="value" id="kpi-governance-gate-sla">100% / 100%</div>
+        </div>
+        <div class="metric">
           <div class="label">Governance Overall Score</div>
           <div class="value" id="kpi-governance-overall">100</div>
         </div>
@@ -903,6 +915,9 @@
       kpiCommits: document.getElementById("kpi-commits"),
       kpiPrs: document.getElementById("kpi-prs"),
       kpiBuildStatus: document.getElementById("kpi-build-status"),
+      kpiTransparency: document.getElementById("kpi-transparency"),
+      kpiControllability: document.getElementById("kpi-controllability"),
+      kpiGovernanceGateSla: document.getElementById("kpi-governance-gate-sla"),
       kpiGovernanceOverall: document.getElementById("kpi-governance-overall"),
       kpiGovernanceCore: document.getElementById("kpi-governance-core"),
       kpiGovernanceCollabRisk: document.getElementById("kpi-governance-collab-risk"),
@@ -1099,6 +1114,9 @@
       const buildStatus = String(ci.last_build_status || "running").toLowerCase();
       elements.kpiBuildStatus.textContent = titleCase(buildStatus);
       elements.kpiBuildStatus.className = `value build-${buildStatus}`;
+      elements.kpiTransparency.textContent = `${governance.transparency_score || 0}`;
+      elements.kpiControllability.textContent = `${governance.controllability_score || 0}`;
+      elements.kpiGovernanceGateSla.textContent = `${governance.gate_pass_rate_percent || 0}% / ${governance.human_response_sla_percent || 0}%`;
       elements.kpiGovernanceOverall.textContent = `${governance.overall_governance_score || 0}`;
       elements.kpiGovernanceCore.textContent = `${governance.process_observability_score || 0} / ${governance.objective_progress_score || 0}`;
       elements.kpiGovernanceCollabRisk.textContent = `${governance.human_collaboration_quality_score || 0} / ${governance.risk_control_score || 0}`;
@@ -1113,6 +1131,11 @@
       const aiTypeText = topAi ? `AI:${topAi[0]}(${topAi[1]})` : "AI:-";
       const humanTypeText = topHuman ? `Human:${topHuman[0]}(${topHuman[1]})` : "Human:-";
       elements.kpiBehaviorTopTypes.textContent = `${aiTypeText} | ${humanTypeText}`;
+
+      const objectiveDefined = Boolean(governance.objective_defined);
+      const unresolvedHumanReviews = Number(governance.unresolved_human_reviews || 0);
+      const governanceEvents24h = Number(governance.events_24h || 0);
+      elements.focusProgressDetail.textContent = `${data.phase || "-"} · govern:${objectiveDefined ? "ready" : "weak"} · events24h:${governanceEvents24h}`;
 
       elements.pillProjectValue.textContent = data.project || "-";
   elements.pillHealthValue.textContent = `${healthScore}`;
@@ -1198,7 +1221,9 @@
       elements.intervention.textContent = intervention.reason || "No immediate intervention needed.";
       elements.intervention.className = intervention.recommended ? "intervention warn" : "intervention ok";
       elements.focusInterventionState.textContent = intervention.recommended ? "Review required" : "Stable";
-      elements.focusInterventionReason.textContent = intervention.reason || "No immediate intervention needed.";
+      elements.focusInterventionReason.textContent = unresolvedHumanReviews > 0
+        ? `${intervention.reason || "Intervention recommended"} (unresolved reviews: ${unresolvedHumanReviews})`
+        : (intervention.reason || "No immediate intervention needed.");
       elements.focusInterventionState.parentElement.classList.toggle("alert", Boolean(intervention.recommended));
     }
 
