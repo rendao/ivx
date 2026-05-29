@@ -3,7 +3,7 @@
 
 Examples:
 - python dashboard/main.py serve --host 127.0.0.1 --port 8765
-- python dashboard/main.py integrate --project-path E:/path/to/project
+- python dashboard/main.py integrate --project-path D:/ivx-demo-project
 - python dashboard/main.py push-progress --phase "CI" --task "Build" --progress 50 --status yellow --risk medium
 """
 
@@ -147,7 +147,7 @@ def _print_help() -> None:
     print("")
     print("Examples:")
     print("  python -m ivx serve --host 127.0.0.1 --port 8789")
-    print("  python -m ivx i -p E:/YanXin/psy-2026/mini")
+    print(r"  python -m ivx i -p D:/ivx-demo-project")
 
 
 def _run_integration(args: list[str]) -> int:
