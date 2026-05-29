@@ -4,6 +4,13 @@ English documentation: see [README.md](README.md).
 
 ![ivx dashboard home](assets/demo.png)
 
+## 交接入口
+- 迁移后请先阅读：[HANDOVER.md](HANDOVER.md)
+
+## AI 协作者先读
+- 请先阅读执行约定：[WORKFLOW.md](WORKFLOW.md)
+- 然后阅读架构速读手册：[ARCHITECTURE_QUICK_READ.md](ARCHITECTURE_QUICK_READ.md)
+
 ## 项目介绍
 中文名称：`IVX 智能研发实时看板`。
 
@@ -31,7 +38,7 @@ English documentation: see [README.md](README.md).
 1. 通过 PyPI 安装：
    - `pip install ivx`
 2. 安装固定版本：
-   - `pip install "ivx==<version>"`
+   - `pip install "ivx==0.2.0"`
 3. 从源码安装：
    - `pip install "git+https://github.com/rendao/ivx.git@main"`
 
@@ -51,7 +58,12 @@ English documentation: see [README.md](README.md).
    - `python app.py --host 127.0.0.1 --port 8789`
 2. 打开看板：
    - `http://127.0.0.1:8789`
-3. 在界面中完成项目设置：
+3. 查看服务健康状态：
+   - `http://127.0.0.1:8789/api/health`
+4. 在界面中完成项目设置：
    - 点击顶部 Project 按钮
    - 填写项目名称/路径后保存
    - 需要重新初始化时可勾选 Force re-bootstrap
+
+## 发布基线
+- 0.2.0 版本重点是稳定性：健康检查、原子写入、状态恢复、严格参数校验。

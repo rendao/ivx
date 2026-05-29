@@ -4,6 +4,13 @@ Chinese documentation: see [README_ZH.md](README_ZH.md).
 
 ![ivx dashboard home](assets/demo.png)
 
+## Handover First
+- Start here after migration: [HANDOVER.md](HANDOVER.md)
+
+## AI Collaborator First-Read
+- Read execution contract first: [WORKFLOW.md](WORKFLOW.md)
+- Then use architecture quick-read playbook: [ARCHITECTURE_QUICK_READ.md](ARCHITECTURE_QUICK_READ.md)
+
 ## Introduction
 `IVX Dashboard` is a standalone live board for AI-driven software delivery. It gives teams a single operational view of execution progress, quality signals, collaborator activity, and intervention priorities.
 
@@ -32,7 +39,7 @@ Use the board as a control surface during daily delivery:
 1. Install from PyPI:
    - `pip install ivx`
 2. Install a pinned version:
-   - `pip install "ivx==<version>"`
+   - `pip install "ivx==0.2.0"`
 3. Install from source:
    - `pip install "git+https://github.com/rendao/ivx.git@main"`
 
@@ -43,9 +50,14 @@ Use the board as a control surface during daily delivery:
    - `ivx serve --host 127.0.0.1 --port 8789`
 3. Open the dashboard:
    - `http://127.0.0.1:8789`
-4. Configure the project in the UI:
+4. Check service health:
+   - `http://127.0.0.1:8789/api/health`
+5. Configure the project in the UI:
    - Click the Project button in the header.
    - Fill project name/path, then Save / Switch.
+
+## Release Baseline
+- Version `0.2.0` focuses on stability: health diagnostics, atomic writes, state recovery, and strict payload validation.
 
 ## Quick Start
 1. Start service:
