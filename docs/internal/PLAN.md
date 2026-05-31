@@ -46,6 +46,38 @@ Out of scope:
 - focused validation before widening scope
 - mandatory handoff summary with coverage/changes/validation/risks/lessons
 
+### Session Self-Check Gate (Strict, pass-before-close)
+Before marking a task done, all checks below must be explicitly answered.
+
+1. Requirement closure check
+- Is requested scope fully covered without silent omission?
+- Is out-of-scope explicitly stated?
+
+2. Validation closure check
+- Did focused validation run against changed behavior (not only generic tests)?
+- Are exact commands and pass/fail results recorded?
+
+3. Git closure check
+- Is local `HEAD` commit present and message task-scoped?
+- Is residual working tree listed (`git status --short`) and intentionally excluded or planned?
+- Is local vs remote state explicit (committed locally only vs pushed)?
+
+4. Dashboard closure check
+- Are event metrics and task fields interpreted by contract, not assumption?
+- Confirmed distinction:
+	- `task` drives Current Task
+	- `next_milestone` drives the milestone line
+	- commit events update `recent_events`/`commits_today`, not `task` by default
+
+5. Reviewer clarity check
+- Can a reviewer answer in under 2 minutes:
+	- what changed
+	- how it was validated
+	- what remains uncommitted or risky
+
+Close rule:
+- If any answer above is "no" or "unclear", status remains `in-progress`.
+
 ### Ownership, Commit, and Review Rule
 - Whoever takes a task is responsible for implementation, focused validation, and the task commit.
 - A task should not be marked `done` until validation evidence is recorded here.
@@ -69,9 +101,9 @@ Status values:
 |---|---|---|---|---|---|---|
 | A1 Runtime availability and connection-refused diagnostics | P0 | done | current-session | 2026-05-29 | none | `python -m pytest tests/test_service_contract.py` |
 | A2 Testing telemetry stale refresh safeguards | P0 | in-progress | current-session | 2026-05-29 | review required before push/merge | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m unittest tests.test_telemetry -v` |
-| B1 Governance event semantic validation | P1 | todo | unassigned | 2026-05-29 | dependency: A1/A2 baseline | pending |
-| C1 Intervention queue action model | P1 | todo | unassigned | 2026-05-29 | dependency: A1 baseline | pending |
-| D1 Second-project onboarding pilot | P2 | todo | unassigned | 2026-05-29 | dependency: B1/C1 baseline | pending |
+| B1 Governance event semantic validation | P1 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_governance.py -q` |
+| C1 Intervention queue action model | P1 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_service_contract.py -q` |
+| D1 Second-project onboarding pilot | P2 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/second_project_pilot.py --host 127.0.0.1 --port 8793` |
 
 ### Session Handoff Contract (Required)
 When a session closes a task update, append one short record under "Recent Handoffs" using this format:
@@ -99,6 +131,34 @@ When a session closes a task update, append one short record under "Recent Hando
 - Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m unittest tests.test_telemetry -v` passed (8 tests).
 - Risk and rollback: scope is test-only with no runtime behavior change; rollback is reverting the two new A2 safeguard tests if they prove too strict.
 - Next suggested task: B1 Governance event semantic validation
+- Date: 2026-05-30
+- Task: Session review discipline hardening (cross-session self-check tightening)
+- Status change: governance/process update recorded
+- Files changed: `docs/internal/PLAN.md`
+- Validation summary: checklist reviewed against recent session outcomes (commit visibility mismatch, residual uncommitted files, dashboard field interpretation mismatch) and converted to explicit closure gates.
+- Risk and rollback: risk is over-strict process slowing small tasks; rollback is to downgrade strict gate to advisory-only for low-risk docs-only tasks.
+- Next suggested task: apply this gate to current active task before next push/merge action.
+- Date: 2026-05-31
+- Task: B1 Governance event semantic validation
+- Status change: todo -> done
+- Files changed: `src/ivx/server/governance.py`, `tests/test_governance.py`
+- Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_governance.py -q` passed (4 tests).
+- Risk and rollback: alias normalization may change event-type labeling in downstream consumers; rollback is `git revert --no-edit b876524`.
+- Next suggested task: C1 Intervention queue action model.
+- Date: 2026-05-31
+- Task: C1 Intervention queue action model
+- Status change: todo -> done
+- Files changed: `src/ivx/server/service.py`, `tests/test_service_contract.py`
+- Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_service_contract.py -q` passed (6 tests at delivery).
+- Risk and rollback: due-time policy is priority-based and may require calibration; rollback is `git revert --no-edit 895f814`.
+- Next suggested task: D1 Second-project onboarding pilot.
+- Date: 2026-05-31
+- Task: D1 Second-project onboarding pilot
+- Status change: todo -> done
+- Files changed: `scripts/second_project_pilot.py`, `tests/test_service_contract.py`
+- Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_service_contract.py -q` passed (7 tests) and `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/second_project_pilot.py --host 127.0.0.1 --port 8793` passed with report generated.
+- Risk and rollback: pilot script launches ephemeral server/data and assumes free port; rollback is `git revert --no-edit b6f025b`.
+- Next suggested task: close A2 review/merge, then start weekly trend validation for multi-project evidence.
 
 ## 4. Acceptance Criteria
 - Plan is actionable without creating extra planning documents.
