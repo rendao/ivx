@@ -136,6 +136,25 @@ class ServiceContractTests(unittest.TestCase):
         finally:
             sys.argv = old_argv
 
+    def test_intervention_queue_items_include_owner_due_and_status(self) -> None:
+        progress = service.default_progress()
+        progress["blockers"] = ["manual approval pending"]
+        progress["failed_checks"] = 3
+        progress["pipeline_metrics"]["ci"]["last_build_status"] = "failed"
+        progress["pipeline_metrics"]["governance"]["unresolved_human_reviews"] = 1
+        progress["pipeline_metrics"]["governance"]["controllability_score"] = 50
+
+        queue = service.build_intervention_queue(progress)
+        self.assertGreaterEqual(len(queue), 1)
+
+        for item in queue:
+            self.assertIn("owner", item)
+            self.assertIn("due", item)
+            self.assertIn("status", item)
+            self.assertEqual(item["status"], "open")
+            self.assertTrue(str(item["owner"]).endswith("-owner"))
+            self.assertIsNotNone(service.parse_iso(str(item["due"])))
+
 
 if __name__ == "__main__":
     unittest.main()

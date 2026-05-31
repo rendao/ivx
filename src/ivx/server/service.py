@@ -1518,19 +1518,58 @@ def minutes_since(timestamp: str) -> int:
     return max(0, int((dt.datetime.now(dt.timezone.utc) - parsed).total_seconds() // 60))
 
 
+def intervention_owner_for_role(role: str) -> str:
+    normalized_role = str(role or "development").strip().lower()
+    owner_map = {
+        "governance": "governance-owner",
+        "testing": "qa-owner",
+        "ops": "ops-owner",
+        "review": "review-owner",
+        "development": "dev-owner",
+        "release": "release-owner",
+    }
+    return owner_map.get(normalized_role, f"{sanitize_key(normalized_role) or 'workflow'}-owner")
+
+
+def intervention_due_for_priority(priority: int) -> str:
+    now = dt.datetime.now(dt.timezone.utc)
+    if priority >= 90:
+        due = now + dt.timedelta(hours=2)
+    elif priority >= 75:
+        due = now + dt.timedelta(hours=8)
+    else:
+        due = now + dt.timedelta(hours=24)
+    return due.replace(microsecond=0).isoformat()
+
+
+def make_intervention_item(scope: str, target: str, role: str, priority: int, reason: str, action: str) -> Dict[str, Any]:
+    safe_priority = max(0, min(99, int(priority)))
+    return {
+        "scope": scope,
+        "target": target,
+        "role": role,
+        "owner": intervention_owner_for_role(role),
+        "priority": safe_priority,
+        "status": "open",
+        "due": intervention_due_for_priority(safe_priority),
+        "reason": reason,
+        "action": action,
+    }
+
+
 def build_intervention_queue(progress: Dict[str, Any]) -> list[Dict[str, Any]]:
     queue: list[Dict[str, Any]] = []
 
     for blocker in progress.get("blockers", []):
         queue.append(
-            {
-                "scope": "global",
-                "target": "project",
-                "role": "governance",
-                "priority": 72,
-                "reason": f"Open blocker: {blocker}",
-                "action": "Assign owner and ETA, then post mitigation update.",
-            }
+            make_intervention_item(
+                scope="global",
+                target="project",
+                role="governance",
+                priority=72,
+                reason=f"Open blocker: {blocker}",
+                action="Assign owner and ETA, then post mitigation update.",
+            )
         )
 
     pipeline = progress.get("pipeline_metrics") if isinstance(progress.get("pipeline_metrics"), dict) else {}
@@ -1541,66 +1580,66 @@ def build_intervention_queue(progress: Dict[str, Any]) -> list[Dict[str, Any]]:
     regressions = int(testing.get("regressions", 0))
     if regressions > 0:
         queue.append(
-            {
-                "scope": "global",
-                "target": "testing",
-                "role": "testing",
-                "priority": min(95, 70 + regressions * 5),
-                "reason": f"{regressions} regression(s) detected",
-                "action": "Trigger human review for regression triage and rollback decision.",
-            }
+            make_intervention_item(
+                scope="global",
+                target="testing",
+                role="testing",
+                priority=min(95, 70 + regressions * 5),
+                reason=f"{regressions} regression(s) detected",
+                action="Trigger human review for regression triage and rollback decision.",
+            )
         )
 
     last_build_status = str(ci.get("last_build_status", "running")).lower()
     if last_build_status == "failed":
         queue.append(
-            {
-                "scope": "global",
-                "target": "ci",
-                "role": "ops",
-                "priority": 90,
-                "reason": "Latest CI build failed",
-                "action": "Pause merges and investigate failed checks before next deploy.",
-            }
+            make_intervention_item(
+                scope="global",
+                target="ci",
+                role="ops",
+                priority=90,
+                reason="Latest CI build failed",
+                action="Pause merges and investigate failed checks before next deploy.",
+            )
         )
 
     failed_checks = int(progress.get("failed_checks", 0))
     if failed_checks > 0:
         queue.append(
-            {
-                "scope": "global",
-                "target": "quality",
-                "role": "review",
-                "priority": min(95, 75 + failed_checks * 3),
-                "reason": f"{failed_checks} failed check(s)",
-                "action": "Fix blocking checks and rerun validation pipeline.",
-            }
+            make_intervention_item(
+                scope="global",
+                target="quality",
+                role="review",
+                priority=min(95, 75 + failed_checks * 3),
+                reason=f"{failed_checks} failed check(s)",
+                action="Fix blocking checks and rerun validation pipeline.",
+            )
         )
 
     unresolved_reviews = int(governance.get("unresolved_human_reviews", 0))
     if unresolved_reviews > 0:
         queue.append(
-            {
-                "scope": "global",
-                "target": "human-review",
-                "role": "governance",
-                "priority": min(99, 78 + unresolved_reviews * 4),
-                "reason": f"{unresolved_reviews} unresolved human review request(s)",
-                "action": "Close open review requests with explicit decision records.",
-            }
+            make_intervention_item(
+                scope="global",
+                target="human-review",
+                role="governance",
+                priority=min(99, 78 + unresolved_reviews * 4),
+                reason=f"{unresolved_reviews} unresolved human review request(s)",
+                action="Close open review requests with explicit decision records.",
+            )
         )
 
     controllability = int(governance.get("controllability_score", 100))
     if controllability < 60:
         queue.append(
-            {
-                "scope": "global",
-                "target": "governance",
-                "role": "governance",
-                "priority": 88,
-                "reason": f"controllability score is low ({controllability})",
-                "action": "Run governance checkpoint: objectives, gates, and response SLA must be refreshed.",
-            }
+            make_intervention_item(
+                scope="global",
+                target="governance",
+                role="governance",
+                priority=88,
+                reason=f"controllability score is low ({controllability})",
+                action="Run governance checkpoint: objectives, gates, and response SLA must be refreshed.",
+            )
         )
 
     for collaborator in progress.get("collaborators", []):
@@ -1633,14 +1672,15 @@ def build_intervention_queue(progress: Dict[str, Any]) -> list[Dict[str, Any]]:
 
         if reasons:
             queue.append(
-                {
-                    "scope": "collaborator",
-                    "target": str(collaborator.get("name", "unknown")),
-                    "role": str(collaborator.get("role", "development")),
-                    "priority": min(99, score),
-                    "reason": ", ".join(reasons),
-                    "action": str(collaborator.get("note", "Review and support this collaborator")) or "Review and support this collaborator",
-                }
+                make_intervention_item(
+                    scope="collaborator",
+                    target=str(collaborator.get("name", "unknown")),
+                    role=str(collaborator.get("role", "development")),
+                    priority=min(99, score),
+                    reason=", ".join(reasons),
+                    action=str(collaborator.get("note", "Review and support this collaborator"))
+                    or "Review and support this collaborator",
+                )
             )
 
     queue.sort(key=lambda item: item.get("priority", 0), reverse=True)
