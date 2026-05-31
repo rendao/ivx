@@ -155,6 +155,53 @@ class ServiceContractTests(unittest.TestCase):
             self.assertTrue(str(item["owner"]).endswith("-owner"))
             self.assertIsNotNone(service.parse_iso(str(item["due"])))
 
+    def test_multi_project_progress_isolation_and_switch(self) -> None:
+        service.BASE_DIR = self.temp_dir
+        service.PROGRESS_FILE = self.temp_dir / "live_progress.json"
+        service.PROJECT_STATE_FILE = self.temp_dir / "dashboard_state.json"
+        service.DEFAULT_PROJECT_NAME = "pilot-default"
+
+        primary_payload = {
+            "project_id": "pilot-primary",
+            "project_name": "Pilot Primary",
+            "project_path": str(self.temp_dir / "primary"),
+            "phase": "Phase 1 - Pilot",
+            "task": "Primary task",
+            "progress_percent": 22,
+            "status": "yellow",
+            "risk_level": "medium",
+            "next_milestone": "Primary milestone",
+        }
+        secondary_payload = {
+            "project_id": "pilot-second",
+            "project_name": "Pilot Second",
+            "project_path": str(self.temp_dir / "second"),
+            "phase": "Phase 1 - Pilot",
+            "task": "Secondary task",
+            "progress_percent": 57,
+            "status": "green",
+            "risk_level": "low",
+            "next_milestone": "Secondary milestone",
+        }
+
+        service.write_progress(primary_payload)
+        service.write_progress(secondary_payload)
+
+        registry = service.load_registry()
+        projects = registry.get("projects") if isinstance(registry.get("projects"), dict) else {}
+        self.assertIn("pilot-primary", projects)
+        self.assertIn("pilot-second", projects)
+
+        service.select_or_create_project({"project_id": "pilot-primary"})
+        primary_readback = service.read_progress()
+        self.assertEqual(primary_readback.get("project_id"), "pilot-primary")
+        self.assertEqual(primary_readback.get("progress_percent"), 22)
+
+        service.select_or_create_project({"project_id": "pilot-second"})
+        secondary_readback = service.read_progress()
+        self.assertEqual(secondary_readback.get("project_id"), "pilot-second")
+        self.assertEqual(secondary_readback.get("progress_percent"), 57)
+
 
 if __name__ == "__main__":
     unittest.main()
