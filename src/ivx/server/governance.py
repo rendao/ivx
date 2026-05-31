@@ -8,6 +8,27 @@ from typing import Any, Dict
 EVENT_LOG_RELATIVE = Path(".ivx") / "data" / "governance_events.jsonl"
 DEFAULT_REVIEW_SLA_MINUTES = 30
 
+EVENT_TYPE_ALIASES = {
+    "authorization_requested": "auth_prompted",
+    "permission_prompted": "auth_prompted",
+    "authorization_approved": "auth_approved",
+    "permission_granted": "auth_approved",
+    "authorization_denied": "auth_denied",
+    "permission_denied": "auth_denied",
+    "confirmed": "action_confirmed",
+    "skip": "action_skipped",
+    "stop_requested": "action_stopped",
+    "run_stopped": "task_stopped",
+    "agent_stopped": "task_stopped",
+    "human_review_request": "human_review_requested",
+    "human_review_complete": "human_review_resolved",
+}
+
+SEVERITY_ALIASES = {
+    "warn": "warning",
+    "error": "critical",
+}
+
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
@@ -29,7 +50,17 @@ def governance_event_log_path(project_root: Path) -> Path:
 
 def normalize_governance_event(event: Dict[str, Any]) -> Dict[str, Any]:
     event_type = str(event.get("type") or "decision_logged").strip().lower()
+    event_type = EVENT_TYPE_ALIASES.get(event_type, event_type)
+
+    if event_type == "gate":
+        result = str(event.get("result") or "").strip().lower()
+        if result == "passed":
+            event_type = "gate_passed"
+        elif result == "failed":
+            event_type = "gate_failed"
+
     severity = str(event.get("severity") or "info").strip().lower()
+    severity = SEVERITY_ALIASES.get(severity, severity)
     if severity not in {"info", "warning", "critical"}:
         severity = "info"
 

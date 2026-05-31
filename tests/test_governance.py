@@ -174,6 +174,53 @@ class GovernanceTests(unittest.TestCase):
         self.assertGreaterEqual(metrics["overall_governance_score"], 0)
         self.assertLessEqual(metrics["overall_governance_score"], 100)
 
+    def test_event_aliases_are_normalized_to_canonical_types(self) -> None:
+        alias_events = [
+            {
+                "type": "authorization_requested",
+                "actor": "ai-editor",
+                "message": "Need auth",
+                "request_id": "REQ-77",
+                "interaction_id": "INT-77",
+            },
+            {
+                "type": "permission_granted",
+                "actor": "human-operator",
+                "message": "Approved",
+                "request_id": "REQ-77",
+                "interaction_id": "INT-77",
+            },
+            {
+                "type": "gate",
+                "actor": "ci",
+                "message": "Gate result",
+                "result": "passed",
+            },
+        ]
+
+        for event in alias_events:
+            append_governance_event(self.temp_dir, event)
+
+        recent = governance_recent_events(self.temp_dir, limit=5)
+        recent_types = {item.get("type") for item in recent}
+        self.assertIn("auth_prompted", recent_types)
+        self.assertIn("auth_approved", recent_types)
+        self.assertIn("gate_passed", recent_types)
+
+        metrics = derive_governance_metrics(
+            {
+                "phase": "Phase 2",
+                "task": "Task C",
+                "failed_checks": 0,
+                "blockers": [],
+                "pipeline_metrics": {"testing": {"regressions": 0}},
+            },
+            self.temp_dir,
+        )
+        self.assertEqual(metrics["human_authorization_requests_24h"], 1)
+        self.assertEqual(metrics["human_authorization_approved_24h"], 1)
+        self.assertEqual(metrics["gate_pass_rate_percent"], 100)
+
 
 if __name__ == "__main__":
     unittest.main()
