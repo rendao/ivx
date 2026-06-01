@@ -40,6 +40,7 @@ Out of scope:
 4. Cross-project adoption pilot
 - onboard a second project via non-invasive Level 1 integration
 - verify reproducible metrics with CI artifacts and API push
+- run weekly trend validation to confirm cross-project signals stay stable over repeated pilot runs
 
 ### Execution Rule
 - one scoped task per session
@@ -104,6 +105,7 @@ Status values:
 | B1 Governance event semantic validation | P1 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_governance.py -q` |
 | C1 Intervention queue action model | P1 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_service_contract.py -q` |
 | D1 Second-project onboarding pilot | P2 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/second_project_pilot.py --host 127.0.0.1 --port 8793` |
+| D2 Multi-project weekly trend baseline | P2 | done | current-session | 2026-06-01 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/weekly_trend_validation.py --samples 2 --port-start 8810 --interval-seconds 0` |
 
 ### Session Handoff Contract (Required)
 When a session closes a task update, append one short record under "Recent Handoffs" using this format:
@@ -166,6 +168,13 @@ When a session closes a task update, append one short record under "Recent Hando
 - Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_telemetry.py -q` passed (8 tests).
 - Risk and rollback: scope remains test/telemetry safeguards; rollback is `git revert --no-edit <A2-commit-sha>` for the corresponding A2 implementation commit.
 - Next suggested task: start weekly trend validation for multi-project evidence using D1 pilot script.
+- Date: 2026-06-01
+- Task: D2 Multi-project weekly trend baseline
+- Status change: new -> done
+- Files changed: `scripts/weekly_trend_validation.py`, `tests/test_weekly_trend_validation.py`, `docs/internal/PLAN.md`
+- Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_weekly_trend_validation.py -q` passed (2 tests) and `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/weekly_trend_validation.py --samples 2 --port-start 8810 --interval-seconds 0` passed with JSON/Markdown reports generated under `.ivx/data`.
+- Risk and rollback: repeated pilot runs consume temporary ports and can fail if port range is occupied; rollback is `git revert --no-edit <D2-commit-sha>` for this addition.
+- Next suggested task: raise sample count and schedule periodic execution (daily/weekly) to collect longitudinal evidence.
 
 ## 4. Acceptance Criteria
 - Plan is actionable without creating extra planning documents.
