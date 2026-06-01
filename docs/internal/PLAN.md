@@ -100,7 +100,7 @@ Status values:
 | Task | Priority | Status | Owner/Session | Last Update | Blocker | Validation Evidence |
 |---|---|---|---|---|---|---|
 | A1 Runtime availability and connection-refused diagnostics | P0 | done | current-session | 2026-05-29 | none | `python -m pytest tests/test_service_contract.py` |
-| A2 Testing telemetry stale refresh safeguards | P0 | in-progress | current-session | 2026-05-29 | review required before push/merge | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m unittest tests.test_telemetry -v` |
+| A2 Testing telemetry stale refresh safeguards | P0 | done | current-session | 2026-06-01 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_telemetry.py -q` |
 | B1 Governance event semantic validation | P1 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_governance.py -q` |
 | C1 Intervention queue action model | P1 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_service_contract.py -q` |
 | D1 Second-project onboarding pilot | P2 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/second_project_pilot.py --host 127.0.0.1 --port 8793` |
@@ -159,6 +159,13 @@ When a session closes a task update, append one short record under "Recent Hando
 - Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_service_contract.py -q` passed (7 tests) and `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/second_project_pilot.py --host 127.0.0.1 --port 8793` passed with report generated.
 - Risk and rollback: pilot script launches ephemeral server/data and assumes free port; rollback is `git revert --no-edit b6f025b`.
 - Next suggested task: close A2 review/merge, then start weekly trend validation for multi-project evidence.
+- Date: 2026-06-01
+- Task: A2 Testing telemetry stale refresh safeguards
+- Status change: in-progress -> done
+- Files changed: `tests/test_telemetry.py`, `docs/internal/PLAN.md`
+- Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_telemetry.py -q` passed (8 tests).
+- Risk and rollback: scope remains test/telemetry safeguards; rollback is `git revert --no-edit <A2-commit-sha>` for the corresponding A2 implementation commit.
+- Next suggested task: start weekly trend validation for multi-project evidence using D1 pilot script.
 
 ## 4. Acceptance Criteria
 - Plan is actionable without creating extra planning documents.
