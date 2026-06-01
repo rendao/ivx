@@ -192,6 +192,13 @@ When a session closes a task update, append one short record under "Recent Hando
 - Validation summary: workflow file includes weekly cron + manual dispatch, executes `python scripts/workflow.py weekly-trend`, and uploads trend JSON/Markdown artifacts.
 - Risk and rollback: scheduled runs may fail if dependencies or ports are unavailable in runner context; rollback is `git revert --no-edit <D4-commit-sha>`.
 - Next suggested task: observe first scheduled run and tune `samples/port_start` defaults based on runtime duration.
+- Date: 2026-06-01
+- Task: D5 Weekly-trend runtime observability
+- Status change: new -> done
+- Files changed: `scripts/weekly_trend_validation.py`, `tests/test_weekly_trend_validation.py`, `docs/internal/PLAN.md`
+- Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_weekly_trend_validation.py -q` passed (2 tests) and `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/workflow.py weekly-trend --samples 1 --port-start 8831 --interval-seconds 0` passed with `duration_seconds` and `elapsed_seconds` recorded in trend artifacts.
+- Risk and rollback: adding runtime fields is backward compatible; rollback is `git revert --no-edit <D5-commit-sha>` if the report schema needs to stay minimal.
+- Next suggested task: use measured duration to tune sample count and scheduled cadence.
 
 ## 4. Acceptance Criteria
 - Plan is actionable without creating extra planning documents.

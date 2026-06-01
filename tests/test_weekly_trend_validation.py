@@ -19,6 +19,7 @@ class WeeklyTrendValidationTests(unittest.TestCase):
                 "secondary_progress_percent": 57,
                 "switch_back_matches_primary": True,
                 "secondary_ci_status": "success",
+                "duration_seconds": 1.25,
             },
             {
                 "project_count": 3,
@@ -26,11 +27,13 @@ class WeeklyTrendValidationTests(unittest.TestCase):
                 "secondary_progress_percent": 57,
                 "switch_back_matches_primary": True,
                 "secondary_ci_status": "success",
+                "duration_seconds": 1.75,
             },
         ]
 
         report = summarize(samples)
         self.assertTrue(report["overall_pass"])
+        self.assertEqual(report["duration_seconds"], 3.0)
         self.assertEqual(report["switch_back_success_rate_percent"], 100)
         self.assertEqual(report["secondary_ci_success_rate_percent"], 100)
         self.assertTrue(report["secondary_progress_percent"]["stable"])
@@ -43,6 +46,7 @@ class WeeklyTrendValidationTests(unittest.TestCase):
                 "secondary_progress_percent": 57,
                 "switch_back_matches_primary": False,
                 "secondary_ci_status": "success",
+                "duration_seconds": 1.0,
             },
             {
                 "project_count": 3,
@@ -50,6 +54,7 @@ class WeeklyTrendValidationTests(unittest.TestCase):
                 "secondary_progress_percent": 57,
                 "switch_back_matches_primary": True,
                 "secondary_ci_status": "failed",
+                "duration_seconds": 1.0,
             },
         ]
 

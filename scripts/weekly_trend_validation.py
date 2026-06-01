@@ -81,6 +81,7 @@ def summarize(samples: list[dict[str, Any]]) -> dict[str, Any]:
     return {
         "samples": samples,
         "sample_count": len(samples),
+        "duration_seconds": round(sum(float(item.get("duration_seconds", 0.0)) for item in samples), 3),
         "project_count": {
             "min": min(project_counts),
             "max": max(project_counts),
@@ -106,6 +107,7 @@ def write_markdown(report: dict[str, Any], output_file: Path) -> None:
         "# IVX Multi-Project Weekly Trend Report",
         "",
         f"- Sample count: {report['sample_count']}",
+        f"- Total duration seconds: {report['duration_seconds']}",
         f"- Project count min/max: {report['project_count']['min']} / {report['project_count']['max']}",
         f"- Project count stable: {report['project_count']['stable']}",
         f"- Primary progress stable: {report['primary_progress_percent']['stable']}",
@@ -147,15 +149,20 @@ def main() -> int:
     if not md_output.is_absolute():
         md_output = (ROOT / md_output).resolve()
 
+    started_at = time.perf_counter()
     samples: list[dict[str, Any]] = []
     for i in range(args.samples):
         port = args.port_start + i
+        sample_started_at = time.perf_counter()
         sample = run_pilot_once(port)
+        sample["duration_seconds"] = round(time.perf_counter() - sample_started_at, 3)
         samples.append(sample)
         if args.interval_seconds > 0 and i < args.samples - 1:
             time.sleep(args.interval_seconds)
 
     report = summarize(samples)
+    report["duration_seconds"] = round(sum(float(item.get("duration_seconds", 0.0)) for item in samples), 3)
+    report["elapsed_seconds"] = round(time.perf_counter() - started_at, 3)
 
     json_output.parent.mkdir(parents=True, exist_ok=True)
     json_output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -166,6 +173,7 @@ def main() -> int:
         "md_output": str(md_output),
         "overall_pass": report["overall_pass"],
         "sample_count": report["sample_count"],
+        "duration_seconds": report["duration_seconds"],
     }, ensure_ascii=False, indent=2))
 
     return 0 if report["overall_pass"] else 2
