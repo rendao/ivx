@@ -41,6 +41,7 @@ Out of scope:
 - onboard a second project via non-invasive Level 1 integration
 - verify reproducible metrics with CI artifacts and API push
 - run weekly trend validation to confirm cross-project signals stay stable over repeated pilot runs
+- run weekly-trend from workflow entrypoint on a fixed cadence (daily/weekly) for longitudinal evidence
 
 ### Execution Rule
 - one scoped task per session
@@ -106,6 +107,7 @@ Status values:
 | C1 Intervention queue action model | P1 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_service_contract.py -q` |
 | D1 Second-project onboarding pilot | P2 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/second_project_pilot.py --host 127.0.0.1 --port 8793` |
 | D2 Multi-project weekly trend baseline | P2 | done | current-session | 2026-06-01 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/weekly_trend_validation.py --samples 2 --port-start 8810 --interval-seconds 0` |
+| D3 Weekly-trend workflow scheduling readiness | P2 | done | current-session | 2026-06-01 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/workflow.py weekly-trend --samples 1 --port-start 8820 --interval-seconds 0` |
 
 ### Session Handoff Contract (Required)
 When a session closes a task update, append one short record under "Recent Handoffs" using this format:
@@ -175,6 +177,13 @@ When a session closes a task update, append one short record under "Recent Hando
 - Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe -m pytest tests/test_weekly_trend_validation.py -q` passed (2 tests) and `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/weekly_trend_validation.py --samples 2 --port-start 8810 --interval-seconds 0` passed with JSON/Markdown reports generated under `.ivx/data`.
 - Risk and rollback: repeated pilot runs consume temporary ports and can fail if port range is occupied; rollback is `git revert --no-edit <D2-commit-sha>` for this addition.
 - Next suggested task: raise sample count and schedule periodic execution (daily/weekly) to collect longitudinal evidence.
+- Date: 2026-06-01
+- Task: D3 Weekly-trend workflow scheduling readiness
+- Status change: new -> done
+- Files changed: `scripts/workflow.py`, `scripts/workflow.bat`, `scripts/workflow.sh`, `WORKFLOW.md`, `docs/internal/PLAN.md`
+- Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/workflow.py weekly-trend --samples 1 --port-start 8820 --interval-seconds 0` passed and generated trend artifacts under `.ivx/data`.
+- Risk and rollback: wrapper usage text changes are low risk; workflow weekly-trend command depends on available local ports and pilot script stability. Rollback: `git revert --no-edit <D3-commit-sha>`.
+- Next suggested task: wire this command into CI schedule or OS scheduled task with weekly cadence.
 
 ## 4. Acceptance Criteria
 - Plan is actionable without creating extra planning documents.

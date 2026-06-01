@@ -4,6 +4,7 @@
 Use this script as the single entry point and call it from shell wrappers:
 - python scripts/workflow.py local
 - python scripts/workflow.py local --skip-integration
+- python scripts/workflow.py weekly-trend --samples 3
 """
 
 from __future__ import annotations
@@ -88,6 +89,30 @@ def run_local(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_weekly_trend(args: argparse.Namespace) -> int:
+    cmd = [
+        sys.executable,
+        "scripts/weekly_trend_validation.py",
+        "--samples",
+        str(args.samples),
+        "--port-start",
+        str(args.port_start),
+        "--interval-seconds",
+        str(args.interval_seconds),
+    ]
+    if args.json_output:
+        cmd.extend(["--json-output", args.json_output])
+    if args.md_output:
+        cmd.extend(["--md-output", args.md_output])
+
+    code = run_step("weekly trend validation", cmd)
+    if code != 0:
+        return code
+
+    print("[workflow] OK: weekly trend validation passed")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run unified local workflow checks.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -101,6 +126,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not fail overall command when lint fails",
     )
+
+    weekly = sub.add_parser("weekly-trend", help="Run multi-project weekly trend validation")
+    weekly.add_argument("--samples", type=int, default=3, help="Number of pilot samples")
+    weekly.add_argument("--port-start", type=int, default=8800, help="Starting port for pilot runs")
+    weekly.add_argument("--interval-seconds", type=float, default=0.0, help="Pause between pilot runs")
+    weekly.add_argument("--json-output", default="", help="Optional JSON report output path")
+    weekly.add_argument("--md-output", default="", help="Optional markdown report output path")
     return parser
 
 
@@ -109,6 +141,8 @@ def main() -> int:
     args = parser.parse_args()
     if args.command == "local":
         return run_local(args)
+    if args.command == "weekly-trend":
+        return run_weekly_trend(args)
     parser.print_help()
     return 2
 

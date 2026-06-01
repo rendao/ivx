@@ -41,6 +41,16 @@ Use one command:
 - Windows: `scripts\\workflow.bat local`
 - Linux/macOS: `sh scripts/workflow.sh local`
 
+Weekly trend validation command:
+- Windows: `scripts\\workflow.bat weekly-trend --samples 3`
+- Linux/macOS: `sh scripts/workflow.sh weekly-trend --samples 3`
+
+Trend artifacts:
+- `.ivx/data/multi-project-weekly-trend.json`
+- `.ivx/data/multi-project-weekly-trend.md`
+
+Trend command must return non-zero on failure so it can be scheduled in CI or cron-like jobs.
+
 Equivalent checks include:
 - unit tests
 - integration tests (if applicable)
