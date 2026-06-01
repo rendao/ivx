@@ -51,6 +51,9 @@ Trend artifacts:
 
 Trend command must return non-zero on failure so it can be scheduled in CI or cron-like jobs.
 
+Scheduled workflow:
+- `.github/workflows/weekly-trend.yml`
+
 Equivalent checks include:
 - unit tests
 - integration tests (if applicable)

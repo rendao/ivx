@@ -108,6 +108,7 @@ Status values:
 | D1 Second-project onboarding pilot | P2 | done | current-session | 2026-05-31 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/second_project_pilot.py --host 127.0.0.1 --port 8793` |
 | D2 Multi-project weekly trend baseline | P2 | done | current-session | 2026-06-01 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/weekly_trend_validation.py --samples 2 --port-start 8810 --interval-seconds 0` |
 | D3 Weekly-trend workflow scheduling readiness | P2 | done | current-session | 2026-06-01 | none | `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/workflow.py weekly-trend --samples 1 --port-start 8820 --interval-seconds 0` |
+| D4 Weekly CI schedule wiring | P2 | done | current-session | 2026-06-01 | none | `github workflow: .github/workflows/weekly-trend.yml` |
 
 ### Session Handoff Contract (Required)
 When a session closes a task update, append one short record under "Recent Handoffs" using this format:
@@ -184,6 +185,13 @@ When a session closes a task update, append one short record under "Recent Hando
 - Validation summary: `e:/YanXin/ivx/.venv-release-test/Scripts/python.exe scripts/workflow.py weekly-trend --samples 1 --port-start 8820 --interval-seconds 0` passed and generated trend artifacts under `.ivx/data`.
 - Risk and rollback: wrapper usage text changes are low risk; workflow weekly-trend command depends on available local ports and pilot script stability. Rollback: `git revert --no-edit <D3-commit-sha>`.
 - Next suggested task: wire this command into CI schedule or OS scheduled task with weekly cadence.
+- Date: 2026-06-01
+- Task: D4 Weekly CI schedule wiring
+- Status change: new -> done
+- Files changed: `.github/workflows/weekly-trend.yml`, `WORKFLOW.md`, `docs/internal/PLAN.md`
+- Validation summary: workflow file includes weekly cron + manual dispatch, executes `python scripts/workflow.py weekly-trend`, and uploads trend JSON/Markdown artifacts.
+- Risk and rollback: scheduled runs may fail if dependencies or ports are unavailable in runner context; rollback is `git revert --no-edit <D4-commit-sha>`.
+- Next suggested task: observe first scheduled run and tune `samples/port_start` defaults based on runtime duration.
 
 ## 4. Acceptance Criteria
 - Plan is actionable without creating extra planning documents.
